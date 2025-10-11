@@ -89,18 +89,24 @@ export default function ScoreboardPage() {
     }
   };
 
-  const handleCutPlayer = (playerId: number) => {
-    const playerIndex = players.findIndex(p => p.id === playerId);
+  const handleResetPlayerScore = (playerIdToReset: number) => {
+    const playerIndex = players.findIndex(p => p.id === playerIdToReset);
     if(playerIndex !== -1) {
-      setRounds(rounds.map(round => {
+      const newRounds = rounds.map(round => {
         const newRound = [...round];
-        newRound.splice(playerIndex, 1);
+        newRound[playerIndex] = 0; 
         return newRound;
-      }));
+      });
+      setRounds(newRounds);
+      
       const newCurrentScores = [...currentScores];
-      newCurrentScores.splice(playerIndex, 1);
+      newCurrentScores[playerIndex] = "0";
       setCurrentScores(newCurrentScores);
-      setPlayers(players.filter((p) => p.id !== playerId));
+
+      toast({
+        title: "Score Reset",
+        description: `The score for ${players[playerIndex].name} has been reset to 0.`,
+      });
     }
   };
 
@@ -141,10 +147,20 @@ export default function ScoreboardPage() {
 
   const handleFinishGame = (saveToHistory: boolean = true) => {
     if(saveToHistory && players.length > 0) {
+      const finalScores = players.map((_, playerIndex) => {
+        return rounds.reduce((total, round) => total + (round[playerIndex] || 0), 0) + Number(currentScores[playerIndex] || 0);
+      });
+      
+      const sortedFinal: PlayerWithScore[] = players.map((player, index) => ({
+        ...player,
+        totalScore: finalScores[index] || 0,
+        originalIndex: index,
+      })).sort((a, b) => b.totalScore - a.totalScore);
+
       const newResult: GameResult = {
         id: Date.now(),
         timestamp: new Date(),
-        players: sortedPlayers,
+        players: sortedFinal,
       };
       setGameHistory([newResult, ...gameHistory]);
     }
@@ -301,7 +317,7 @@ export default function ScoreboardPage() {
                           <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500" />
                       )}
                   </div>
-                  <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleCutPlayer(player.id)}>
+                  <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleResetPlayerScore(player.id)}>
                     <Trash2 className="mr-1 h-3 w-3" /> Cut
                   </Button>
                 </div>
