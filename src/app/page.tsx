@@ -139,9 +139,9 @@ export default function ScoreboardPage() {
   }, [totalScores, players, rounds]);
 
   const renderSetupPhase = () => (
-    <Card className="max-w-2xl mx-auto animate-in fade-in-0 duration-500">
+    <Card className="w-full max-w-2xl mx-auto animate-in fade-in-0 duration-500 shadow-lg">
       <CardHeader>
-        <CardTitle>Game Setup</CardTitle>
+        <CardTitle className="text-xl font-medium">Game Setup</CardTitle>
         <CardDescription>Add players to the game. You need at least two to start.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -171,7 +171,7 @@ export default function ScoreboardPage() {
         </div>
       </CardContent>
       <CardFooter>
-        <Button onClick={handleStartGame} disabled={players.length < 2} className="w-full">
+        <Button onClick={handleStartGame} disabled={players.length < 2} className="w-full uppercase tracking-wide">
           Start Game
         </Button>
       </CardFooter>
@@ -179,9 +179,9 @@ export default function ScoreboardPage() {
   );
 
   const renderPlayingPhase = () => (
-     <Card className="animate-in fade-in-0 duration-500">
+     <Card className="animate-in fade-in-0 duration-500 w-full shadow-lg">
       <CardHeader>
-        <CardTitle>Scoreboard</CardTitle>
+        <CardTitle className="text-xl font-medium">Scoreboard</CardTitle>
         <CardDescription>Enter scores for each round. The lowest total score wins.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -226,10 +226,10 @@ export default function ScoreboardPage() {
               </TableRow>
             </TableBody>
             <TableFooter>
-              <TableRow className="bg-secondary/20 hover:bg-secondary/30">
-                <TableHead className="font-bold text-lg">Total</TableHead>
+              <TableRow className="bg-secondary hover:bg-secondary/90">
+                <TableHead className="font-bold text-lg text-secondary-foreground">Total</TableHead>
                 {players.map(player => (
-                  <TableCell key={player.id} className="text-center font-bold text-xl text-primary-foreground">
+                  <TableCell key={player.id} className="text-center font-bold text-xl text-primary">
                     <div className="flex items-center justify-center gap-2">
                        {totalScores[player.id]}
                        {overallWinnerIds.includes(player.id) && <Crown className="h-6 w-6 text-yellow-400" />}
@@ -242,7 +242,7 @@ export default function ScoreboardPage() {
         </div>
       </CardContent>
       <CardFooter>
-        <Button onClick={handleSaveRound} className="w-full md:w-auto md:ml-auto">
+        <Button onClick={handleSaveRound} className="w-full md:w-auto md:ml-auto uppercase tracking-wide">
           Save Round {rounds.length + 1}
         </Button>
       </CardFooter>
@@ -250,20 +250,22 @@ export default function ScoreboardPage() {
   );
 
   return (
-    <main className="container mx-auto p-4 md:p-8 bg-background min-h-screen">
-      <header className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+    <main className="flex flex-col items-center p-4 bg-background min-h-screen">
+       <header className="w-full max-w-5xl flex items-center justify-between mb-6 p-4 bg-primary text-primary-foreground shadow-md rounded-b-lg">
         <div className="flex items-center gap-3">
-          <Spade className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold font-headline text-foreground">
+          <Spade className="w-8 h-8" />
+          <h1 className="text-2xl font-bold font-headline">
             Remi Scoreboard
           </h1>
         </div>
-        <Button variant="outline" onClick={handleNewGame}>
+        <Button variant="ghost" className="hover:bg-primary/80" onClick={handleNewGame}>
           <RotateCw className="mr-2 h-4 w-4" />
           New Game
         </Button>
       </header>
-      {gamePhase === 'setup' ? renderSetupPhase() : renderPlayingPhase()}
+      <div className="w-full max-w-5xl">
+        {gamePhase === 'setup' ? renderSetupPhase() : renderPlayingPhase()}
+      </div>
     </main>
   );
 }
