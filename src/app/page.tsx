@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, type KeyboardEvent } from "react";
+import { useState, useMemo, type KeyboardEvent, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -53,6 +53,8 @@ export default function ScoreboardPage() {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [currentScores, setCurrentScores] = useState<(string | number)[]>([]);
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
+  const [winner, setWinner] = useState<string | null>(null);
+  const [isWinnerDialogOpen, setIsWinnerDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleAddPlayer = () => {
@@ -114,6 +116,8 @@ export default function ScoreboardPage() {
     setRounds([]);
     setCurrentScores([]);
     setNewPlayerName("");
+    setWinner(null);
+    setIsWinnerDialogOpen(false);
   }
   
   const sortedPlayers = useMemo(() => {
@@ -129,6 +133,16 @@ export default function ScoreboardPage() {
     
     return combined;
   }, [players, totalScores]);
+
+  useEffect(() => {
+    if (winner) return; // a winner is already declared
+
+    const winnerCheck = sortedPlayers.find(p => p.totalScore >= 1000);
+    if (winnerCheck) {
+      setWinner(winnerCheck.name);
+      setIsWinnerDialogOpen(true);
+    }
+  }, [sortedPlayers, winner]);
 
 
   const gridColsClass = `grid-cols-${players.length > 0 ? players.length : 1}`;
@@ -197,10 +211,10 @@ export default function ScoreboardPage() {
               <div key={player.id} className="text-center">
                 <div className="flex items-center justify-center gap-1">
                     <p className="font-semibold text-lg truncate">{player.name}</p>
-                    {sortedPlayers.length > 1 && idx === 0 && (
+                    {sortedPlayers.length > 1 && idx === 0 && player.totalScore > 0 && (
                         <ThumbsUp className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                     )}
-                    {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && (
+                    {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore > 0 && (
                         <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500" />
                     )}
                 </div>
@@ -286,8 +300,21 @@ export default function ScoreboardPage() {
             </div>
         </div>
       </div>
+       <AlertDialog open={isWinnerDialogOpen} onOpenChange={setIsWinnerDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-2xl text-accent">Congratulations!</AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-lg">
+              The winner is <span className="font-bold text-foreground">{winner}</span>!
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleFinishGame} className="w-full">
+              Start New Game
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
-
-    
