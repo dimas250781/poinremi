@@ -49,6 +49,7 @@ export default function ScoreboardPage() {
   const [newPlayerName, setNewPlayerName] = useState("");
   const [rounds, setRounds] = useState<Round[]>([]);
   const [currentScores, setCurrentScores] = useState<(string | number)[]>([]);
+  const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleAddPlayer = () => {
@@ -60,6 +61,7 @@ export default function ScoreboardPage() {
       setPlayers([...players, newPlayer]);
       setNewPlayerName("");
       setCurrentScores([...currentScores, ""]);
+      setIsAddPlayerDialogOpen(false);
     }
   };
 
@@ -81,8 +83,6 @@ export default function ScoreboardPage() {
   const handleAddPlayerOnEnter = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleAddPlayer();
-      // This is a bit of a hack to close the dialog
-      document.querySelector('[data-radix-collection-item] button[aria-label="Cancel"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
     }
   };
 
@@ -149,7 +149,7 @@ export default function ScoreboardPage() {
           </header>
 
           <div className="flex justify-center gap-2">
-            <AlertDialog>
+            <AlertDialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
               <AlertDialogTrigger asChild>
                   <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground">
                       <Plus className="mr-2" /> Add Player
