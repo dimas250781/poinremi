@@ -42,7 +42,8 @@ import {
   History,
   ThumbsUp,
   ThumbsDown,
-  X
+  X,
+  RotateCcw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
@@ -123,6 +124,20 @@ export default function ScoreboardPage() {
     setCurrentScores(Array(players.length).fill(""));
   };
   
+  const handleUndoRound = () => {
+    if (rounds.length === 0) return;
+    const lastRound = rounds[rounds.length - 1];
+    const newRounds = rounds.slice(0, -1);
+    
+    setRounds(newRounds);
+    setCurrentScores(lastRound.map(String));
+
+    toast({
+      title: "Undo Successful",
+      description: "The last round has been removed.",
+    });
+  }
+
   const totalScores = useMemo(() => {
     return players.map((_, playerIndex) => {
       const roundsScore = rounds.reduce((total, round) => total + (round[playerIndex] || 0), 0);
@@ -373,6 +388,9 @@ export default function ScoreboardPage() {
               
               <div className="p-4 border-t border-border">
                 <div className="flex justify-center gap-2">
+                  <Button variant="outline" onClick={handleUndoRound} disabled={rounds.length === 0}>
+                    <RotateCcw className="mr-2" /> Undo Round
+                  </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive">
