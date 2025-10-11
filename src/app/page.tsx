@@ -454,6 +454,7 @@ export default function ScoreboardPage() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+        </AlertDialog>
     </main>
   );
+}
