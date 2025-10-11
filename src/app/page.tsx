@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, type KeyboardEvent } from "react";
@@ -30,6 +31,8 @@ import {
   Plus,
   Trash2,
   History,
+  ThumbsUp,
+  ThumbsDown
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -114,6 +117,8 @@ export default function ScoreboardPage() {
   }
   
   const sortedPlayers = useMemo(() => {
+    if (players.length === 0) return [];
+    
     const combined = players.map((player, index) => ({
       ...player,
       totalScore: totalScores[index] || 0,
@@ -188,9 +193,17 @@ export default function ScoreboardPage() {
         
         <div className="p-4 border-t border-b border-border">
           <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length > 0 ? players.length : 1}, 1fr)` }}>
-            {sortedPlayers.map((player) => (
+            {sortedPlayers.map((player, idx) => (
               <div key={player.id} className="text-center">
-                <p className="font-semibold text-lg truncate">{player.name}</p>
+                <div className="flex items-center justify-center gap-1">
+                    <p className="font-semibold text-lg truncate">{player.name}</p>
+                    {sortedPlayers.length > 1 && idx === 0 && (
+                        <ThumbsUp className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                    )}
+                    {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && (
+                        <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500" />
+                    )}
+                </div>
                 <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleCutPlayer(player.id)}>
                   <Trash2 className="mr-1 h-3 w-3" /> Cut
                 </Button>
@@ -276,3 +289,5 @@ export default function ScoreboardPage() {
     </main>
   );
 }
+
+    
