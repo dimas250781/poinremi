@@ -64,8 +64,6 @@ export default function ScoreboardPage() {
   };
 
   const handleCutPlayer = (playerId: number) => {
-    setPlayers(players.filter((p) => p.id !== playerId));
-    // Also remove their scores
     const playerIndex = players.findIndex(p => p.id === playerId);
     if(playerIndex !== -1) {
       setRounds(rounds.map(round => {
@@ -76,6 +74,7 @@ export default function ScoreboardPage() {
       const newCurrentScores = [...currentScores];
       newCurrentScores.splice(playerIndex, 1);
       setCurrentScores(newCurrentScores);
+      setPlayers(players.filter((p) => p.id !== playerId));
     }
   };
 
@@ -109,9 +108,11 @@ export default function ScoreboardPage() {
   
   const totalScores = useMemo(() => {
     return players.map((_, playerIndex) => {
-      return rounds.reduce((total, round) => total + (round[playerIndex] || 0), 0);
+      const roundsScore = rounds.reduce((total, round) => total + (round[playerIndex] || 0), 0);
+      const currentScore = Number(currentScores[playerIndex] || 0);
+      return roundsScore + currentScore;
     });
-  }, [rounds, players]);
+  }, [rounds, players, currentScores]);
 
 
   const handleResetScores = () => {
