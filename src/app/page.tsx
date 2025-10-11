@@ -201,26 +201,6 @@ export default function ScoreboardPage() {
                 </div>
               ))}
             </div>
-
-            {players.length > 0 && (
-              <div className={`grid gap-4 mt-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                  {players.map((player, index) => (
-                  <div key={player.id} className="text-center">
-                      <Input
-                      type="number"
-                      placeholder="0"
-                      value={currentScores[index]}
-                      onChange={(e) => {
-                          const newScores = [...currentScores];
-                          newScores[index] = e.target.value;
-                          setCurrentScores(newScores);
-                      }}
-                      className="text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12"
-                      />
-                  </div>
-                  ))}
-              </div>
-            )}
           </div>
           
           <ScrollArea className="flex-grow">
@@ -234,6 +214,25 @@ export default function ScoreboardPage() {
                   ))}
                 </div>
               ))}
+              {players.length > 0 && (
+                <div className={`grid gap-4 mt-2`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
+                    {players.map((player, index) => (
+                    <div key={player.id} className="text-center">
+                        <Input
+                        type="number"
+                        placeholder="0"
+                        value={currentScores[index]}
+                        onChange={(e) => {
+                            const newScores = [...currentScores];
+                            newScores[index] = e.target.value;
+                            setCurrentScores(newScores);
+                        }}
+                        className="text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12"
+                        />
+                    </div>
+                    ))}
+                </div>
+              )}
             </div>
           </ScrollArea>
         </div>
