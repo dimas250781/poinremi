@@ -43,11 +43,11 @@ import {
   ThumbsUp,
   ThumbsDown,
   X,
-  RotateCcw
+  RotateCcw,
+  ArrowLeft
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { VirtualKeyboard } from "@/components/ui/virtual-keyboard";
 
 type Player = {
   id: number;
@@ -200,13 +200,13 @@ export default function ScoreboardPage() {
     })
   }
   
-  const handleVirtualKeyPress = (key: string) => {
+  const handleKeyPress = (key: string) => {
     if (activeInputIndex === null) return;
   
     const newScores = [...currentScores];
     const currentValue = String(newScores[activeInputIndex] || '');
   
-    if (key === 'backspace') {
+    if (key === 'del') {
       newScores[activeInputIndex] = currentValue.slice(0, -1);
     } else if (key === '-') {
       if (currentValue === '') {
@@ -218,6 +218,9 @@ export default function ScoreboardPage() {
   
     setCurrentScores(newScores);
   };
+  
+  const keyboardKeys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', 'del'];
+
 
   useEffect(() => {
     const scoresForWinnerCheck = players.map((_, playerIndex) => {
@@ -359,7 +362,7 @@ export default function ScoreboardPage() {
                       {sortedPlayers.length > 1 && idx === 0 && player.totalScore > 0 && (
                           <ThumbsUp className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                       )}
-                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore > sortedPlayers[0].totalScore && (
+                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore < sortedPlayers[0].totalScore && (
                           <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500" />
                       )}
                   </div>
@@ -388,12 +391,12 @@ export default function ScoreboardPage() {
                   {sortedPlayers.map(({ originalIndex, id }) => (
                   <div key={id} className="text-center">
                       <Input
-                        type="text" // Change to text to allow '-'
-                        readOnly // Make input readonly to prevent native keyboard
+                        type="text" 
+                        readOnly 
                         onFocus={() => setActiveInputIndex(originalIndex)}
                         placeholder="0"
                         value={currentScores[originalIndex]}
-                        className="text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12"
+                        className={`text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12 ${activeInputIndex === originalIndex ? 'ring-2 ring-yellow-400' : ''}`}
                       />
                   </div>
                   ))}
@@ -414,6 +417,21 @@ export default function ScoreboardPage() {
                 </div>
               </div>
               
+              <div className="p-2 border-t border-border">
+                <div className="grid grid-cols-6 gap-1 mb-2">
+                    {keyboardKeys.slice(0, 6).map((key) => (
+                        <Button key={key} variant="outline" className="h-10 text-xl" onClick={() => handleKeyPress(key)}>{key}</Button>
+                    ))}
+                </div>
+                <div className="grid grid-cols-6 gap-1">
+                    {keyboardKeys.slice(6).map((key) => (
+                        <Button key={key} variant="outline" className="h-10 text-xl" onClick={() => handleKeyPress(key)}>
+                            {key === 'del' ? <ArrowLeft/> : key}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+
               <div className="p-4 border-t border-border">
                 <div className="flex justify-center gap-2">
                   <Button variant="outline" onClick={handleUndoRound} disabled={rounds.length === 0}>
@@ -458,11 +476,8 @@ export default function ScoreboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-       <VirtualKeyboard
-        isOpen={activeInputIndex !== null}
-        onKeyPress={handleVirtualKeyPress}
-        onClose={() => setActiveInputIndex(null)}
-      />
     </main>
   );
 }
+
+    
