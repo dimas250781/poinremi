@@ -222,7 +222,7 @@ export default function ScoreboardPage() {
             </p>
           </header>
 
-          <div className="flex justify-center gap-2">
+          <div className="flex justify-center gap-2 flex-wrap">
             <AlertDialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
               <AlertDialogTrigger asChild>
                   <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -433,3 +433,5 @@ export default function ScoreboardPage() {
     </main>
   );
 }
+
+    
