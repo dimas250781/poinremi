@@ -22,6 +22,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetDescription,
+  SheetFooter
+} from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   PlusCircle,
@@ -32,29 +41,39 @@ import {
   Trash2,
   History,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 type Player = {
   id: number;
   name: string;
 };
 
+type PlayerWithScore = Player & {
+  totalScore: number;
+  originalIndex: number;
+}
+
 type Round = number[];
 
+type GameResult = {
+  id: number;
+  timestamp: Date;
+  players: PlayerWithScore[];
+}
+
 export default function ScoreboardPage() {
-  const [players, setPlayers] = useState<Player[]>([
-    // {id: 1, name: "Player 1"},
-    // {id: 2, name: "Player 2"},
-    // {id: 3, name: "Player 3"},
-  ]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [rounds, setRounds] = useState<Round[]>([]);
   const [currentScores, setCurrentScores] = useState<(string | number)[]>([]);
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [winner, setWinner] = useState<string | null>(null);
   const [isWinnerDialogOpen, setIsWinnerDialogOpen] = useState(false);
+  const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
   const { toast } = useToast();
 
   const handleAddPlayer = () => {
@@ -92,6 +111,7 @@ export default function ScoreboardPage() {
   };
 
   const handleNewRound = () => {
+    if (players.length === 0) return;
     const newRound = players.map((_, idx) => Number(currentScores[idx] || 0));
     setRounds([...rounds, newRound]);
     setCurrentScores(Array(players.length).fill(""));
@@ -104,26 +124,11 @@ export default function ScoreboardPage() {
       return roundsScore + currentScore;
     });
   }, [rounds, players, currentScores]);
-
-
-  const handleResetScores = () => {
-    setRounds([]);
-    setCurrentScores(Array(players.length).fill(""));
-  }
-
-  const handleFinishGame = () => {
-    setPlayers([]);
-    setRounds([]);
-    setCurrentScores([]);
-    setNewPlayerName("");
-    setWinner(null);
-    setIsWinnerDialogOpen(false);
-  }
   
   const sortedPlayers = useMemo(() => {
     if (players.length === 0) return [];
     
-    const combined = players.map((player, index) => ({
+    const combined: PlayerWithScore[] = players.map((player, index) => ({
       ...player,
       totalScore: totalScores[index] || 0,
       originalIndex: index,
@@ -134,18 +139,45 @@ export default function ScoreboardPage() {
     return combined;
   }, [players, totalScores]);
 
+  const handleResetScores = () => {
+    setRounds([]);
+    setCurrentScores(Array(players.length).fill(""));
+  }
+
+  const handleFinishGame = (saveToHistory: boolean = true) => {
+    if(saveToHistory && players.length > 0) {
+      const newResult: GameResult = {
+        id: Date.now(),
+        timestamp: new Date(),
+        players: sortedPlayers,
+      };
+      setGameHistory([newResult, ...gameHistory]);
+    }
+    setPlayers([]);
+    setRounds([]);
+    setCurrentScores([]);
+    setNewPlayerName("");
+    setWinner(null);
+    setIsWinnerDialogOpen(false);
+  }
+
+  const handleClearHistory = () => {
+    setGameHistory([]);
+    toast({
+      title: "Success",
+      description: "Winner history has been cleared."
+    })
+  }
+
   useEffect(() => {
-    if (winner) return; // a winner is already declared
+    if (winner || players.length === 0) return;
 
     const winnerCheck = sortedPlayers.find(p => p.totalScore >= 1000);
     if (winnerCheck) {
       setWinner(winnerCheck.name);
       setIsWinnerDialogOpen(true);
     }
-  }, [sortedPlayers, winner]);
-
-
-  const gridColsClass = `grid-cols-${players.length > 0 ? players.length : 1}`;
+  }, [sortedPlayers, winner, players.length]);
 
   return (
     <main className="flex flex-col items-center justify-center p-4 bg-gray-800 min-h-screen text-foreground">
@@ -196,35 +228,92 @@ export default function ScoreboardPage() {
           </AlertDialog>
 
 
-            <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleNewRound}>
+            <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleNewRound} disabled={players.length === 0}>
               <Plus className="mr-2" /> New Round
             </Button>
-            <Button variant="outline">
-              <History className="mr-2"/> Winner History
-            </Button>
+            
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline">
+                  <History className="mr-2"/> Winner History
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="flex flex-col">
+                <SheetHeader>
+                  <SheetTitle>Winner History</SheetTitle>
+                  <SheetDescription>
+                    List of winners from previous games.
+                  </SheetDescription>
+                </SheetHeader>
+                <ScrollArea className="flex-grow pr-4">
+                  <div className="space-y-4">
+                    {gameHistory.length > 0 ? gameHistory.map((game, index) => (
+                      <div key={game.id} className="p-4 border rounded-lg">
+                        <h3 className="font-bold mb-2">Game #{gameHistory.length - index} - {game.timestamp.toLocaleString()}</h3>
+                        <ol className="list-decimal list-inside space-y-1">
+                          {game.players.map(p => (
+                            <li key={p.id}>
+                              <span className="font-semibold">{p.name}</span> - {p.totalScore} points
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )) : (
+                      <p className="text-muted-foreground text-center">No history yet.</p>
+                    )}
+                  </div>
+                </ScrollArea>
+                {gameHistory.length > 0 && (
+                  <SheetFooter className="mt-4">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full">
+                          <Trash2 className="mr-2"/> Clear History
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete all game history. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleClearHistory} className="bg-destructive hover:bg-destructive/90">Clear History</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </SheetFooter>
+                )}
+              </SheetContent>
+            </Sheet>
+
           </div>
         </div>
         
-        <div className="p-4 border-t border-b border-border">
-          <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length > 0 ? players.length : 1}, 1fr)` }}>
-            {sortedPlayers.map((player, idx) => (
-              <div key={player.id} className="text-center">
-                <div className="flex items-center justify-center gap-1">
-                    <p className="font-semibold text-lg truncate">{player.name}</p>
-                    {sortedPlayers.length > 1 && idx === 0 && player.totalScore > 0 && (
-                        <ThumbsUp className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                    )}
-                    {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore > 0 && (
-                        <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500" />
-                    )}
+        {players.length > 0 && (
+          <div className="p-4 border-t border-b border-border">
+            <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
+              {sortedPlayers.map((player, idx) => (
+                <div key={player.id} className="text-center">
+                  <div className="flex items-center justify-center gap-1">
+                      <p className="font-semibold text-lg truncate">{player.name}</p>
+                      {sortedPlayers.length > 1 && idx === 0 && player.totalScore > 0 && (
+                          <ThumbsUp className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                      )}
+                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore > 0 && (
+                          <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500" />
+                      )}
+                  </div>
+                  <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleCutPlayer(player.id)}>
+                    <Trash2 className="mr-1 h-3 w-3" /> Cut
+                  </Button>
                 </div>
-                <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleCutPlayer(player.id)}>
-                  <Trash2 className="mr-1 h-3 w-3" /> Cut
-                </Button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <ScrollArea className="flex-grow">
           <div className="p-4 space-y-2">
@@ -259,9 +348,9 @@ export default function ScoreboardPage() {
           </div>
         </ScrollArea>
         
-        <div className="flex-shrink-0 mt-auto">
-            <div className="p-4">
-              {players.length > 0 && (
+        {players.length > 0 && (
+          <div className="flex-shrink-0 mt-auto">
+              <div className="p-4">
                 <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                     {sortedPlayers.map(({ totalScore, id }) => (
                         <div key={id} className="bg-yellow-300/80 text-background rounded-md p-2 text-center text-2xl font-bold">
@@ -269,36 +358,36 @@ export default function ScoreboardPage() {
                         </div>
                       ))}
                 </div>
-              )}
-            </div>
-            
-            <div className="p-4 border-t border-border">
-              <div className="flex justify-center gap-2">
-                <Button variant="outline" onClick={handleResetScores}>
-                  <RotateCw className="mr-2" /> Reset Scores
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">
-                        <Trophy className="mr-2" /> Finish Game
-                      </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                      <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure you want to finish the game?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                          This will clear all players and scores. This action cannot be undone.
-                      </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleFinishGame} className="bg-destructive hover:bg-destructive/90">Finish Game</AlertDialogAction>
-                      </AlertDialogFooter>
-                  </AlertDialogContent>
-              </AlertDialog>
               </div>
-            </div>
-        </div>
+              
+              <div className="p-4 border-t border-border">
+                <div className="flex justify-center gap-2">
+                  <Button variant="outline" onClick={handleResetScores}>
+                    <RotateCw className="mr-2" /> Reset Scores
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">
+                          <Trophy className="mr-2" /> Finish Game
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to finish the game?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will save the results and clear all players and scores. This action cannot be undone.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleFinishGame(true)} className="bg-destructive hover:bg-destructive/90">Finish Game</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                </div>
+              </div>
+          </div>
+        )}
       </div>
        <AlertDialog open={isWinnerDialogOpen} onOpenChange={setIsWinnerDialogOpen}>
         <AlertDialogContent>
@@ -309,7 +398,7 @@ export default function ScoreboardPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={handleFinishGame} className="w-full">
+            <AlertDialogAction onClick={() => handleFinishGame(true)} className="w-full">
               Start New Game
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -318,3 +407,5 @@ export default function ScoreboardPage() {
     </main>
   );
 }
+
+    
