@@ -237,7 +237,7 @@ export default function ScoreboardPage() {
         setIsWinnerDialogOpen(true);
       }
     }
-  }, [rounds, currentScores, players, winner, sortedPlayers]);
+  }, [rounds, currentScores, players, winner]);
 
   return (
     <main className="flex flex-col items-center justify-center p-4 bg-gray-800 min-h-screen text-foreground">
