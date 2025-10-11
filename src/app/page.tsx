@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { VirtualKeyboard } from "@/components/ui/virtual-keyboard";
 
 type Player = {
   id: number;
@@ -58,7 +59,7 @@ type PlayerWithScore = Player & {
   originalIndex: number;
 }
 
-type Round = number[];
+type Round = (number | string)[];
 
 type GameResult = {
   id: number;
@@ -76,6 +77,8 @@ export default function ScoreboardPage() {
   const [isWinnerDialogOpen, setIsWinnerDialogOpen] = useState(false);
   const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
   const { toast } = useToast();
+  
+  const [activeInputIndex, setActiveInputIndex] = useState<number | null>(null);
 
   const handleAddPlayer = () => {
     if (newPlayerName.trim()) {
@@ -119,7 +122,10 @@ export default function ScoreboardPage() {
 
   const handleNewRound = () => {
     if (players.length === 0) return;
-    const newRound = players.map((_, idx) => Number(currentScores[idx] || 0));
+    
+    // Convert empty strings to 0 before adding to rounds
+    const newRound = currentScores.map(score => score === '' || score === '-' ? 0 : Number(score));
+    
     setRounds([...rounds, newRound]);
     setCurrentScores(Array(players.length).fill(""));
   };
@@ -140,30 +146,29 @@ export default function ScoreboardPage() {
 
   const totalScores = useMemo(() => {
     return players.map((_, playerIndex) => {
-      const roundsScore = rounds.reduce((total, round) => total + (round[playerIndex] || 0), 0);
-      const currentScore = Number(currentScores[playerIndex] || 0);
-      return roundsScore + currentScore;
+      const roundsScore = rounds.reduce((total, round) => total + Number(round[playerIndex] || 0), 0);
+      return roundsScore;
     });
-  }, [rounds, players, currentScores]);
+  }, [rounds, players]);
   
   const sortedPlayers = useMemo(() => {
     if (players.length === 0) return [];
     
     const combined: PlayerWithScore[] = players.map((player, index) => ({
       ...player,
-      totalScore: totalScores[index] || 0,
+      totalScore: totalScores[index] + Number(currentScores[index] || 0),
       originalIndex: index,
     }));
     
     combined.sort((a, b) => b.totalScore - a.totalScore);
     
     return combined;
-  }, [players, totalScores]);
+  }, [players, totalScores, currentScores]);
 
   const handleFinishGame = (saveToHistory: boolean = true) => {
     if(saveToHistory && players.length > 0) {
       const finalScores = players.map((_, playerIndex) => {
-        return rounds.reduce((total, round) => total + (round[playerIndex] || 0), 0) + Number(currentScores[playerIndex] || 0);
+        return rounds.reduce((total, round) => total + (Number(round[playerIndex]) || 0), 0) + Number(currentScores[playerIndex] || 0);
       });
       
       const sortedFinal: PlayerWithScore[] = players.map((player, index) => ({
@@ -194,16 +199,42 @@ export default function ScoreboardPage() {
       description: "Winner history has been cleared."
     })
   }
+  
+  const handleVirtualKeyPress = (key: string) => {
+    if (activeInputIndex === null) return;
+  
+    const newScores = [...currentScores];
+    const currentValue = String(newScores[activeInputIndex] || '');
+  
+    if (key === 'backspace') {
+      newScores[activeInputIndex] = currentValue.slice(0, -1);
+    } else if (key === '-') {
+      if (currentValue === '') {
+        newScores[activeInputIndex] = '-';
+      }
+    } else {
+      newScores[activeInputIndex] = currentValue + key;
+    }
+  
+    setCurrentScores(newScores);
+  };
 
   useEffect(() => {
-    if (winner || players.length === 0) return;
+    const scoresForWinnerCheck = players.map((_, playerIndex) => {
+        return rounds.reduce((total, round) => total + (Number(round[playerIndex]) || 0), 0) + Number(currentScores[playerIndex] || 0);
+      });
 
-    const winnerCheck = sortedPlayers.find(p => p.totalScore >= 1000);
-    if (winnerCheck) {
-      setWinner(winnerCheck.name);
-      setIsWinnerDialogOpen(true);
+    const winnerCheck = players
+        .map((p, i) => ({ name: p.name, score: scoresForWinnerCheck[i] }))
+        .sort((a, b) => b.score - a.score)[0];
+
+    if (winnerCheck && winnerCheck.score >= 1000) {
+      if (!winner) { // Only set winner if not already set
+        setWinner(winnerCheck.name);
+        setIsWinnerDialogOpen(true);
+      }
     }
-  }, [sortedPlayers, winner, players.length]);
+  }, [rounds, currentScores, players, winner, sortedPlayers]);
 
   return (
     <main className="flex flex-col items-center justify-center p-4 bg-gray-800 min-h-screen text-foreground">
@@ -328,7 +359,7 @@ export default function ScoreboardPage() {
                       {sortedPlayers.length > 1 && idx === 0 && player.totalScore > 0 && (
                           <ThumbsUp className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                       )}
-                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore > 0 && (
+                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore > sortedPlayers[0].totalScore && (
                           <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500" />
                       )}
                   </div>
@@ -357,15 +388,12 @@ export default function ScoreboardPage() {
                   {sortedPlayers.map(({ originalIndex, id }) => (
                   <div key={id} className="text-center">
                       <Input
-                      type="number"
-                      placeholder="0"
-                      value={currentScores[originalIndex]}
-                      onChange={(e) => {
-                          const newScores = [...currentScores];
-                          newScores[originalIndex] = e.target.value;
-                          setCurrentScores(newScores);
-                      }}
-                      className="text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12"
+                        type="text" // Change to text to allow '-'
+                        readOnly // Make input readonly to prevent native keyboard
+                        onFocus={() => setActiveInputIndex(originalIndex)}
+                        placeholder="0"
+                        value={currentScores[originalIndex]}
+                        className="text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12"
                       />
                   </div>
                   ))}
@@ -430,8 +458,11 @@ export default function ScoreboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+       <VirtualKeyboard
+        isOpen={activeInputIndex !== null}
+        onKeyPress={handleVirtualKeyPress}
+        onClose={() => setActiveInputIndex(null)}
+      />
     </main>
   );
 }
-
-    
