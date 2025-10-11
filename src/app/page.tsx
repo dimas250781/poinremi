@@ -95,15 +95,7 @@ export default function ScoreboardPage() {
       });
       return;
     }
-     if (currentScores.some(score => score === '' || isNaN(Number(score)))) {
-      toast({
-        variant: "destructive",
-        title: "Incomplete Scores",
-        description: "Please enter a valid score for every player before starting a new round.",
-      });
-      return;
-    }
-    const newRound = currentScores.map(score => Number(score));
+    const newRound = currentScores.map(score => Number(score) || 0);
     setRounds([...rounds, newRound]);
     setCurrentScores(Array(players.length).fill(""));
   };
