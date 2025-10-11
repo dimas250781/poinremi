@@ -198,24 +198,9 @@ export default function ScoreboardPage() {
                 ))}
               </div>
 
-                {players.length > 0 && <div className="border-b border-border -mx-4"></div>}
-
-              {/* --- Score History --- */}
-              <div className="flex-grow space-y-2">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {rounds.map((round, roundIndex) => (
-                      round.map((score, playerIndex) => (
-                        <div key={`${roundIndex}-${playerIndex}`} className="bg-accent text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
-                            {score}
-                        </div>
-                      ))
-                    ))}
-                </div>
-              </div>
-              
               {/* --- Current Score Input --- */}
               {players.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
                     {players.map((player, index) => (
                     <div key={player.id} className="text-center">
                         <Input
@@ -234,16 +219,33 @@ export default function ScoreboardPage() {
                 </div>
               )}
 
+              {players.length > 0 && <div className="border-b border-border -mx-4 my-4"></div>}
+
+              {/* --- Score History --- */}
+              <div className="flex-grow space-y-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {rounds.map((round, roundIndex) => (
+                      round.map((score, playerIndex) => (
+                        <div key={`${roundIndex}-${playerIndex}`} className="bg-accent text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
+                            {score}
+                        </div>
+                      ))
+                    ))}
+                </div>
+              </div>
+              
             </div>
 
             {/* --- TOTALS --- */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {players.map((player, index) => (
-                    <div key={player.id} className="bg-yellow-300/80 text-background rounded-md p-2 text-center text-2xl font-bold">
-                        {totalScores[index] || 0}
-                    </div>
-                  ))}
-            </div>
+            {players.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {players.map((player, index) => (
+                      <div key={player.id} className="bg-yellow-300/80 text-background rounded-md p-2 text-center text-2xl font-bold">
+                          {totalScores[index] || 0}
+                      </div>
+                    ))}
+              </div>
+            )}
           </div>
         </div>
         
