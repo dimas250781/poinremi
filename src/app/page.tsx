@@ -117,7 +117,7 @@ export default function ScoreboardPage() {
 
   return (
     <main className="flex flex-col items-center justify-center p-4 bg-gray-800 min-h-screen text-foreground">
-      <div className="w-full max-w-sm h-[80vh] max-h-[700px] flex flex-col bg-background rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-sm h-[90vh] max-h-[800px] flex flex-col bg-background rounded-2xl shadow-2xl overflow-hidden">
         
         <div className="flex-shrink-0 p-4">
           <header className="w-full mb-6 text-center">
