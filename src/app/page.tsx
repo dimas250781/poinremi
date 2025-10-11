@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Crown, PlusCircle, RotateCw, UserPlus, Spade } from "lucide-react";
+import { Crown, PlusCircle, RotateCw, UserPlus, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Player = {
@@ -207,7 +207,7 @@ export default function ScoreboardPage() {
               <TableRow className="bg-muted/10">
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
-                   <PlusCircle className="h-4 w-4 text-primary"/>
+                   <PlusCircle className="h-4 w-4 text-accent"/>
                    <span>Round {rounds.length + 1}</span>
                   </div>
                 </TableCell>
@@ -229,7 +229,7 @@ export default function ScoreboardPage() {
               <TableRow className="bg-secondary hover:bg-secondary/90">
                 <TableHead className="font-bold text-lg text-secondary-foreground">Total</TableHead>
                 {players.map(player => (
-                  <TableCell key={player.id} className="text-center font-bold text-xl text-primary">
+                  <TableCell key={player.id} className="text-center font-bold text-xl text-accent">
                     <div className="flex items-center justify-center gap-2">
                        {totalScores[player.id]}
                        {overallWinnerIds.includes(player.id) && <Crown className="h-6 w-6 text-yellow-400" />}
@@ -242,7 +242,7 @@ export default function ScoreboardPage() {
         </div>
       </CardContent>
       <CardFooter>
-        <Button onClick={handleSaveRound} className="w-full md:w-auto md:ml-auto uppercase tracking-wide">
+        <Button onClick={handleSaveRound} className="w-full md:w-auto md:ml-auto uppercase tracking-wide bg-accent text-accent-foreground hover:bg-accent/90">
           Save Round {rounds.length + 1}
         </Button>
       </CardFooter>
@@ -251,17 +251,22 @@ export default function ScoreboardPage() {
 
   return (
     <main className="flex flex-col items-center p-4 bg-background min-h-screen">
-       <header className="w-full max-w-5xl flex items-center justify-between mb-6 p-4 bg-primary text-primary-foreground shadow-md rounded-b-lg">
-        <div className="flex items-center gap-3">
-          <Spade className="w-8 h-8" />
-          <h1 className="text-2xl font-bold font-headline">
-            Remi Scoreboard
-          </h1>
+      <header className="w-full max-w-5xl mb-4 p-4 bg-primary text-primary-foreground shadow-md rounded-b-lg">
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Trophy className="w-8 h-8 text-accent" />
+              <div>
+                  <h1 className="text-3xl font-bold text-accent">
+                      SKOR REMI
+                  </h1>
+                  <p className="text-xs text-muted-foreground">Dibuat oleh: M01 Software Development</p>
+              </div>
+            </div>
+            <Button variant="ghost" className="hover:bg-primary/80" onClick={handleNewGame}>
+              <RotateCw className="mr-2 h-4 w-4" />
+              New Game
+            </Button>
         </div>
-        <Button variant="ghost" className="hover:bg-primary/80" onClick={handleNewGame}>
-          <RotateCw className="mr-2 h-4 w-4" />
-          New Game
-        </Button>
       </header>
       <div className="w-full max-w-5xl">
         {gamePhase === 'setup' ? renderSetupPhase() : renderPlayingPhase()}
