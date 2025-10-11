@@ -81,6 +81,8 @@ export default function ScoreboardPage() {
   const handleAddPlayerOnEnter = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleAddPlayer();
+      // This is a bit of a hack to close the dialog
+      document.querySelector('[data-radix-collection-item] button[aria-label="Cancel"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
     }
   };
 
