@@ -87,7 +87,7 @@ export default function ScoreboardPage() {
   };
 
   const handleNewRound = () => {
-    const newRound = currentScores.map(score => Number(score) || 0);
+    const newRound = players.map((_, idx) => Number(currentScores[idx] || 0));
     setRounds([...rounds, newRound]);
     setCurrentScores(Array(players.length).fill(""));
   };
@@ -112,6 +112,19 @@ export default function ScoreboardPage() {
     setCurrentScores([]);
     setNewPlayerName("");
   }
+  
+  const sortedPlayers = useMemo(() => {
+    const combined = players.map((player, index) => ({
+      ...player,
+      totalScore: totalScores[index] || 0,
+      originalIndex: index,
+    }));
+    
+    combined.sort((a, b) => b.totalScore - a.totalScore);
+    
+    return combined;
+  }, [players, totalScores]);
+
 
   const gridColsClass = `grid-cols-${players.length > 0 ? players.length : 1}`;
 
@@ -175,7 +188,7 @@ export default function ScoreboardPage() {
         
         <div className="p-4 border-t border-b border-border">
           <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length > 0 ? players.length : 1}, 1fr)` }}>
-            {players.map((player, index) => (
+            {sortedPlayers.map((player) => (
               <div key={player.id} className="text-center">
                 <p className="font-semibold text-lg truncate">{player.name}</p>
                 <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleCutPlayer(player.id)}>
@@ -190,24 +203,24 @@ export default function ScoreboardPage() {
           <div className="p-4 space-y-2">
             {rounds.map((round, roundIndex) => (
               <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                {round.map((score, playerIndex) => (
-                  <div key={`${roundIndex}-${playerIndex}`} className="bg-accent text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
-                      {score}
+                {sortedPlayers.map(({ originalIndex }) => (
+                  <div key={`${roundIndex}-${originalIndex}`} className="bg-accent text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
+                      {round[originalIndex]}
                   </div>
                 ))}
               </div>
             ))}
             {players.length > 0 && (
               <div className={`grid gap-4 mt-2`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                  {players.map((player, index) => (
-                  <div key={player.id} className="text-center">
+                  {sortedPlayers.map(({ originalIndex, id }) => (
+                  <div key={id} className="text-center">
                       <Input
                       type="number"
                       placeholder="0"
-                      value={currentScores[index]}
+                      value={currentScores[originalIndex]}
                       onChange={(e) => {
                           const newScores = [...currentScores];
-                          newScores[index] = e.target.value;
+                          newScores[originalIndex] = e.target.value;
                           setCurrentScores(newScores);
                       }}
                       className="text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12"
@@ -223,9 +236,9 @@ export default function ScoreboardPage() {
             <div className="p-4">
               {players.length > 0 && (
                 <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                    {players.map((player, index) => (
-                        <div key={player.id} className="bg-yellow-300/80 text-background rounded-md p-2 text-center text-2xl font-bold">
-                            {totalScores[index] || 0}
+                    {sortedPlayers.map(({ totalScore, id }) => (
+                        <div key={id} className="bg-yellow-300/80 text-background rounded-md p-2 text-center text-2xl font-bold">
+                            {totalScore || 0}
                         </div>
                       ))}
                 </div>
