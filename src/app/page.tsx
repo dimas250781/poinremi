@@ -77,8 +77,6 @@ export default function ScoreboardPage() {
   const [isWinnerDialogOpen, setIsWinnerDialogOpen] = useState(false);
   const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
   const { toast } = useToast();
-  
-  const [activeInputIndex, setActiveInputIndex] = useState<number | null>(null);
 
   const handleAddPlayer = () => {
     if (newPlayerName.trim()) {
@@ -104,7 +102,7 @@ export default function ScoreboardPage() {
       setRounds(newRounds);
       
       const newCurrentScores = [...currentScores];
-      newCurrentScores[playerIndex] = "0";
+      newCurrentScores[playerIndex] = "";
       setCurrentScores(newCurrentScores);
 
       toast({
@@ -128,7 +126,6 @@ export default function ScoreboardPage() {
     
     setRounds([...rounds, newRound]);
     setCurrentScores(Array(players.length).fill(""));
-    setActiveInputIndex(null);
   };
   
   const handleUndoRound = () => {
@@ -199,27 +196,15 @@ export default function ScoreboardPage() {
       description: "Winner history has been cleared."
     })
   }
-  
-  const handleKeyPress = (key: string) => {
-    if (activeInputIndex === null) return;
-  
+
+  const handleScoreChange = (index: number, value: string) => {
     const newScores = [...currentScores];
-    const currentValue = String(newScores[activeInputIndex] || '');
-  
-    if (key === 'del') {
-      newScores[activeInputIndex] = currentValue.slice(0, -1);
-    } else if (key === '-') {
-      if (currentValue === '') {
-        newScores[activeInputIndex] = '-';
-      }
-    } else {
-      newScores[activeInputIndex] = currentValue + key;
+    // Allow only numbers and a single leading minus sign
+    if (/^-?\d*$/.test(value)) {
+      newScores[index] = value;
+      setCurrentScores(newScores);
     }
-  
-    setCurrentScores(newScores);
   };
-  
-  const keyboardKeys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', 'del'];
 
 
   useEffect(() => {
@@ -387,7 +372,7 @@ export default function ScoreboardPage() {
             {rounds.map((round, roundIndex) => (
               <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                 {sortedPlayers.map(({ originalIndex }) => (
-                  <div key={`${roundIndex}-${originalIndex}`} className="bg-accent/20 text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
+                  <div key={`${roundIndex}-${originalIndex}`} className="bg-accent/20 text-accent-foreground rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12">
                       {round[originalIndex]}
                   </div>
                 ))}
@@ -398,12 +383,11 @@ export default function ScoreboardPage() {
                   {sortedPlayers.map(({ originalIndex, id }) => (
                   <div key={id} className="text-center">
                       <Input
-                        type="text" 
-                        readOnly 
-                        onFocus={() => setActiveInputIndex(originalIndex)}
+                        type="text"
                         placeholder="0"
                         value={currentScores[originalIndex]}
-                        className={`text-center bg-card border-border text-foreground placeholder:text-muted-foreground text-xl font-bold h-12 ${activeInputIndex === originalIndex ? 'ring-2 ring-yellow-400' : ''}`}
+                        onChange={(e) => handleScoreChange(originalIndex, e.target.value)}
+                        className={`text-center bg-card border-border text-foreground placeholder:text-muted-foreground text-xl font-bold h-12`}
                       />
                   </div>
                   ))}
@@ -425,22 +409,6 @@ export default function ScoreboardPage() {
                       ))}
                 </div>
               </div>
-              
-              {/* Keyboard */}
-              <div className="p-2 border-t border-border">
-                <div className="grid grid-cols-6 gap-1 mb-2">
-                    {keyboardKeys.slice(0, 6).map((key) => (
-                        <Button key={key} variant="outline" className="h-10 text-xl" onClick={() => handleKeyPress(key)}>{key}</Button>
-                    ))}
-                </div>
-                <div className="grid grid-cols-6 gap-1">
-                    {keyboardKeys.slice(6).map((key) => (
-                        <Button key={key} variant="outline" className="h-10 text-xl" onClick={() => handleKeyPress(key)}>
-                            {key === 'del' ? <ArrowLeft/> : key}
-                        </Button>
-                    ))}
-                </div>
-            </div>
 
               {/* Action Buttons */}
               <div className="p-4 border-t border-border">
@@ -489,4 +457,3 @@ export default function ScoreboardPage() {
       </AlertDialog>
     </main>
   );
-}
