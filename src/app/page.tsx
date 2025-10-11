@@ -129,6 +129,7 @@ export default function ScoreboardPage() {
     setNewPlayerName("");
   }
 
+  const gridColsClass = `grid-cols-${players.length > 0 ? players.length : 1}`;
 
   return (
     <main className="flex flex-col items-center justify-center p-4 bg-gray-800 min-h-screen text-foreground">
@@ -190,10 +191,10 @@ export default function ScoreboardPage() {
 
         <div className="flex-grow flex flex-col border-t border-b border-border overflow-hidden">
           <div className="p-4 border-b border-border">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length > 0 ? players.length : 1}, 1fr)` }}>
               {players.map((player, index) => (
                 <div key={player.id} className="text-center">
-                  <p className="font-semibold text-lg">{player.name}</p>
+                  <p className="font-semibold text-lg truncate">{player.name}</p>
                   <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleCutPlayer(player.id)}>
                     <Trash2 className="mr-1 h-3 w-3" /> Cut
                   </Button>
@@ -202,7 +203,7 @@ export default function ScoreboardPage() {
             </div>
 
             {players.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+              <div className={`grid gap-4 mt-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                   {players.map((player, index) => (
                   <div key={player.id} className="text-center">
                       <Input
@@ -224,22 +225,22 @@ export default function ScoreboardPage() {
           
           <ScrollArea className="flex-grow">
             <div className="p-4 space-y-2">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {rounds.map((round, roundIndex) => (
-                    round.map((score, playerIndex) => (
-                      <div key={`${roundIndex}-${playerIndex}`} className="bg-accent text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
-                          {score}
-                      </div>
-                    ))
+              {rounds.map((round, roundIndex) => (
+                <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
+                  {round.map((score, playerIndex) => (
+                    <div key={`${roundIndex}-${playerIndex}`} className="bg-accent text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
+                        {score}
+                    </div>
                   ))}
-              </div>
+                </div>
+              ))}
             </div>
           </ScrollArea>
         </div>
 
         <div className="flex-shrink-0 p-4">
           {players.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                 {players.map((player, index) => (
                     <div key={player.id} className="bg-yellow-300/80 text-background rounded-md p-2 text-center text-2xl font-bold">
                         {totalScores[index] || 0}
