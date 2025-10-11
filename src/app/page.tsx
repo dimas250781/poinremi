@@ -128,6 +128,7 @@ export default function ScoreboardPage() {
     
     setRounds([...rounds, newRound]);
     setCurrentScores(Array(players.length).fill(""));
+    setActiveInputIndex(null);
   };
   
   const handleUndoRound = () => {
@@ -146,8 +147,7 @@ export default function ScoreboardPage() {
 
   const totalScores = useMemo(() => {
     return players.map((_, playerIndex) => {
-      const roundsScore = rounds.reduce((total, round) => total + Number(round[playerIndex] || 0), 0);
-      return roundsScore;
+      return rounds.reduce((total, round) => total + Number(round[playerIndex] || 0), 0);
     });
   }, [rounds, players]);
   
@@ -223,6 +223,8 @@ export default function ScoreboardPage() {
 
 
   useEffect(() => {
+    if (players.length === 0) return;
+
     const scoresForWinnerCheck = players.map((_, playerIndex) => {
         return rounds.reduce((total, round) => total + (Number(round[playerIndex]) || 0), 0) + Number(currentScores[playerIndex] || 0);
       });
@@ -236,6 +238,8 @@ export default function ScoreboardPage() {
         setWinner(winnerCheck.name);
         setIsWinnerDialogOpen(true);
       }
+    } else {
+      setWinner(null); // Reset winner if no one is above 1000
     }
   }, [rounds, currentScores, players, winner]);
 
@@ -243,6 +247,7 @@ export default function ScoreboardPage() {
     <main className="flex flex-col items-center justify-center p-4 bg-gray-800 min-h-screen text-foreground">
       <div className="w-full max-w-sm h-[90vh] max-h-[800px] flex flex-col bg-background rounded-2xl shadow-2xl overflow-hidden">
         
+        {/* Header - Not scrollable */}
         <div className="flex-shrink-0 p-4">
           <header className="w-full mb-6 text-center">
             <div className="flex items-center justify-center gap-3">
@@ -285,7 +290,7 @@ export default function ScoreboardPage() {
                       <AlertDialogAction onClick={handleAddPlayer}>Add</AlertDialogAction>
                   </AlertDialogFooter>
               </AlertDialogContent>
-          </AlertDialog>
+            </AlertDialog>
 
 
             <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleNewRound} disabled={players.length === 0}>
@@ -352,8 +357,9 @@ export default function ScoreboardPage() {
           </div>
         </div>
         
+        {/* Player Names - Not scrollable */}
         {players.length > 0 && (
-          <div className="p-4 border-t border-b border-border">
+          <div className="flex-shrink-0 p-4 border-t border-b border-border">
             <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
               {sortedPlayers.map((player, idx) => (
                 <div key={player.id} className="text-center">
@@ -362,7 +368,7 @@ export default function ScoreboardPage() {
                       {sortedPlayers.length > 1 && idx === 0 && player.totalScore > 0 && (
                           <ThumbsUp className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                       )}
-                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore < sortedPlayers[0].totalScore && (
+                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore < sortedPlayers[0].totalScore && player.totalScore < 0 && (
                           <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500" />
                       )}
                   </div>
@@ -375,12 +381,13 @@ export default function ScoreboardPage() {
           </div>
         )}
 
+        {/* Scrollable Content Area */}
         <ScrollArea className="flex-grow">
           <div className="p-4 space-y-2">
             {rounds.map((round, roundIndex) => (
               <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                 {sortedPlayers.map(({ originalIndex }) => (
-                  <div key={`${roundIndex}-${originalIndex}`} className="bg-accent text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
+                  <div key={`${roundIndex}-${originalIndex}`} className="bg-accent/20 text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
                       {round[originalIndex]}
                   </div>
                 ))}
@@ -396,7 +403,7 @@ export default function ScoreboardPage() {
                         onFocus={() => setActiveInputIndex(originalIndex)}
                         placeholder="0"
                         value={currentScores[originalIndex]}
-                        className={`text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12 ${activeInputIndex === originalIndex ? 'ring-2 ring-yellow-400' : ''}`}
+                        className={`text-center bg-card border-border text-foreground placeholder:text-muted-foreground text-xl font-bold h-12 ${activeInputIndex === originalIndex ? 'ring-2 ring-yellow-400' : ''}`}
                       />
                   </div>
                   ))}
@@ -405,18 +412,21 @@ export default function ScoreboardPage() {
           </div>
         </ScrollArea>
         
+        {/* Footer - Not scrollable */}
         {players.length > 0 && (
-          <div className="flex-shrink-0 mt-auto">
+          <div className="flex-shrink-0 mt-auto border-t border-border">
+              {/* Total Scores */}
               <div className="p-4">
                 <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                     {sortedPlayers.map(({ totalScore, id }) => (
-                        <div key={id} className="bg-yellow-300/80 text-background rounded-md p-2 text-center text-2xl font-bold">
+                        <div key={id} className="bg-primary text-primary-foreground rounded-md p-2 text-center text-2xl font-bold">
                             {totalScore || 0}
                         </div>
                       ))}
                 </div>
               </div>
               
+              {/* Keyboard */}
               <div className="p-2 border-t border-border">
                 <div className="grid grid-cols-6 gap-1 mb-2">
                     {keyboardKeys.slice(0, 6).map((key) => (
@@ -432,6 +442,7 @@ export default function ScoreboardPage() {
                 </div>
             </div>
 
+              {/* Action Buttons */}
               <div className="p-4 border-t border-border">
                 <div className="flex justify-center gap-2">
                   <Button variant="outline" onClick={handleUndoRound} disabled={rounds.length === 0}>
@@ -479,5 +490,3 @@ export default function ScoreboardPage() {
     </main>
   );
 }
-
-    
