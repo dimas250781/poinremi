@@ -139,11 +139,6 @@ export default function ScoreboardPage() {
     return combined;
   }, [players, totalScores]);
 
-  const handleResetScores = () => {
-    setRounds([]);
-    setCurrentScores(Array(players.length).fill(""));
-  }
-
   const handleFinishGame = (saveToHistory: boolean = true) => {
     if(saveToHistory && players.length > 0) {
       const newResult: GameResult = {
@@ -362,9 +357,6 @@ export default function ScoreboardPage() {
               
               <div className="p-4 border-t border-border">
                 <div className="flex justify-center gap-2">
-                  <Button variant="outline" onClick={handleResetScores}>
-                    <RotateCw className="mr-2" /> Reset Scores
-                  </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive">
@@ -407,5 +399,3 @@ export default function ScoreboardPage() {
     </main>
   );
 }
-
-    
