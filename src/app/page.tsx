@@ -87,14 +87,6 @@ export default function ScoreboardPage() {
   };
 
   const handleNewRound = () => {
-    if (players.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "No Players",
-        description: "Add some players before starting a new round.",
-      });
-      return;
-    }
     const newRound = currentScores.map(score => Number(score) || 0);
     setRounds([...rounds, newRound]);
     setCurrentScores(Array(players.length).fill(""));
@@ -180,92 +172,92 @@ export default function ScoreboardPage() {
             </Button>
           </div>
         </div>
-
-        <div className="flex-grow flex flex-col border-t border-b border-border overflow-hidden">
-          <div className="p-4 border-b border-border">
-            <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length > 0 ? players.length : 1}, 1fr)` }}>
-              {players.map((player, index) => (
-                <div key={player.id} className="text-center">
-                  <p className="font-semibold text-lg truncate">{player.name}</p>
-                  <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleCutPlayer(player.id)}>
-                    <Trash2 className="mr-1 h-3 w-3" /> Cut
-                  </Button>
-                </div>
-              ))}
-            </div>
+        
+        <div className="p-4 border-t border-b border-border">
+          <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length > 0 ? players.length : 1}, 1fr)` }}>
+            {players.map((player, index) => (
+              <div key={player.id} className="text-center">
+                <p className="font-semibold text-lg truncate">{player.name}</p>
+                <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleCutPlayer(player.id)}>
+                  <Trash2 className="mr-1 h-3 w-3" /> Cut
+                </Button>
+              </div>
+            ))}
           </div>
-          
-          <ScrollArea className="flex-grow">
-            <div className="p-4 space-y-2">
-              {rounds.map((round, roundIndex) => (
-                <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                  {round.map((score, playerIndex) => (
-                    <div key={`${roundIndex}-${playerIndex}`} className="bg-accent text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
-                        {score}
-                    </div>
+        </div>
+
+        <ScrollArea className="flex-grow">
+          <div className="p-4 space-y-2">
+            {rounds.map((round, roundIndex) => (
+              <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
+                {round.map((score, playerIndex) => (
+                  <div key={`${roundIndex}-${playerIndex}`} className="bg-accent text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
+                      {score}
+                  </div>
+                ))}
+              </div>
+            ))}
+            {players.length > 0 && (
+              <div className={`grid gap-4 mt-2`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
+                  {players.map((player, index) => (
+                  <div key={player.id} className="text-center">
+                      <Input
+                      type="number"
+                      placeholder="0"
+                      value={currentScores[index]}
+                      onChange={(e) => {
+                          const newScores = [...currentScores];
+                          newScores[index] = e.target.value;
+                          setCurrentScores(newScores);
+                      }}
+                      className="text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12"
+                      />
+                  </div>
                   ))}
-                </div>
-              ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+        
+        <div className="flex-shrink-0 mt-auto">
+            <div className="p-4">
               {players.length > 0 && (
-                <div className={`grid gap-4 mt-2`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
+                <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                     {players.map((player, index) => (
-                    <div key={player.id} className="text-center">
-                        <Input
-                        type="number"
-                        placeholder="0"
-                        value={currentScores[index]}
-                        onChange={(e) => {
-                            const newScores = [...currentScores];
-                            newScores[index] = e.target.value;
-                            setCurrentScores(newScores);
-                        }}
-                        className="text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12"
-                        />
-                    </div>
-                    ))}
+                        <div key={player.id} className="bg-yellow-300/80 text-background rounded-md p-2 text-center text-2xl font-bold">
+                            {totalScores[index] || 0}
+                        </div>
+                      ))}
                 </div>
               )}
             </div>
-          </ScrollArea>
-        </div>
-
-        <div className="flex-shrink-0 p-4">
-          {players.length > 0 && (
-            <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                {players.map((player, index) => (
-                    <div key={player.id} className="bg-yellow-300/80 text-background rounded-md p-2 text-center text-2xl font-bold">
-                        {totalScores[index] || 0}
-                    </div>
-                  ))}
+            
+            <div className="p-4 border-t border-border">
+              <div className="flex justify-center gap-2">
+                <Button variant="outline" onClick={handleResetScores}>
+                  <RotateCw className="mr-2" /> Reset Scores
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                        <Trophy className="mr-2" /> Finish Game
+                      </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                      <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure you want to finish the game?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          This will clear all players and scores. This action cannot be undone.
+                      </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleFinishGame} className="bg-destructive hover:bg-destructive/90">Finish Game</AlertDialogAction>
+                      </AlertDialogFooter>
+                  </AlertDialogContent>
+              </AlertDialog>
+              </div>
             </div>
-          )}
-        </div>
-        
-        <div className="flex-shrink-0 p-4 border-t border-border">
-          <div className="flex justify-center gap-2">
-            <Button variant="outline" onClick={handleResetScores}>
-              <RotateCw className="mr-2" /> Reset Scores
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                    <Trophy className="mr-2" /> Finish Game
-                  </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                  <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure you want to finish the game?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                      This will clear all players and scores. This action cannot be undone.
-                  </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleFinishGame} className="bg-destructive hover:bg-destructive/90">Finish Game</AlertDialogAction>
-                  </AlertDialogFooter>
-              </AlertDialogContent>
-          </AlertDialog>
-          </div>
         </div>
       </div>
     </main>
