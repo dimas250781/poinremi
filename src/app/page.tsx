@@ -1,27 +1,35 @@
 "use client";
 
-import { useState, useMemo, type ChangeEvent, type KeyboardEvent } from "react";
+import { useState, useMemo, type KeyboardEvent } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Crown, PlusCircle, RotateCw, UserPlus, Trophy } from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
+  PlusCircle,
+  RotateCw,
+  Trophy,
+  UserPlus,
+  Plus,
+  Trash2,
+  History,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Player = {
@@ -29,247 +37,236 @@ type Player = {
   name: string;
 };
 
-type Round = {
-  roundNumber: number;
-  scores: Record<Player["id"], number | null>;
-};
+type Round = number[];
 
 export default function ScoreboardPage() {
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<Player[]>([
+    // {id: 1, name: "Player 1"},
+    // {id: 2, name: "Player 2"},
+    // {id: 3, name: "Player 3"},
+  ]);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [rounds, setRounds] = useState<Round[]>([]);
-  const [currentScores, setCurrentScores] = useState<Record<Player["id"], string>>({});
-  const [gamePhase, setGamePhase] = useState<"setup" | "playing">("setup");
+  const [currentScores, setCurrentScores] = useState<(string | number)[]>([]);
   const { toast } = useToast();
 
   const handleAddPlayer = () => {
     if (newPlayerName.trim()) {
-      setPlayers([...players, { id: Date.now(), name: newPlayerName.trim() }]);
+      const newPlayer: Player = {
+        id: Date.now(),
+        name: newPlayerName.trim(),
+      };
+      setPlayers([...players, newPlayer]);
       setNewPlayerName("");
+      setCurrentScores([...currentScores, ""]);
     }
   };
-  
+
+  const handleCutPlayer = (playerId: number) => {
+    setPlayers(players.filter((p) => p.id !== playerId));
+    // Also remove their scores
+    const playerIndex = players.findIndex(p => p.id === playerId);
+    if(playerIndex !== -1) {
+      setRounds(rounds.map(round => {
+        const newRound = [...round];
+        newRound.splice(playerIndex, 1);
+        return newRound;
+      }));
+      const newCurrentScores = [...currentScores];
+      newCurrentScores.splice(playerIndex, 1);
+      setCurrentScores(newCurrentScores);
+    }
+  };
+
   const handleAddPlayerOnEnter = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleAddPlayer();
     }
-  }
+  };
 
-  const handleStartGame = () => {
-    if (players.length >= 2) {
-      setGamePhase("playing");
-    } else {
-       toast({
+  const handleNewRound = () => {
+    if (players.length === 0) {
+      toast({
         variant: "destructive",
-        title: "Not enough players",
-        description: "Please add at least 2 players to start the game.",
+        title: "No Players",
+        description: "Add some players before starting a new round.",
       });
+      return;
     }
-  };
-
-  const handleScoreChange = (playerId: number, value: string) => {
-    setCurrentScores({ ...currentScores, [playerId]: value });
-  };
-
-  const handleSaveRound = () => {
-    const scoresForRound: Record<Player["id"], number | null> = {};
-    let allScoresEntered = true;
-
-    for (const player of players) {
-      const score = currentScores[player.id];
-      if (score === "" || score === undefined || isNaN(parseInt(score, 10))) {
-        allScoresEntered = false;
-        scoresForRound[player.id] = null; // Or some other indicator of missing score
-      } else {
-        scoresForRound[player.id] = parseInt(score, 10);
-      }
-    }
-
-    if (!allScoresEntered && Object.values(currentScores).some(s => s && s.trim() !== '')) {
-       toast({
+     if (currentScores.some(score => score === '' || isNaN(Number(score)))) {
+      toast({
         variant: "destructive",
         title: "Incomplete Scores",
-        description: "Please enter a score for every player.",
+        description: "Please enter a valid score for every player before starting a new round.",
       });
       return;
     }
-    
-    // Allow saving empty round
-    if(Object.values(scoresForRound).every(s => s === null)) {
-      // Do not save an entirely empty round unless user wants to
-      return;
-    }
-
-
-    setRounds([
-      ...rounds,
-      { roundNumber: rounds.length + 1, scores: scoresForRound },
-    ]);
-    setCurrentScores({});
+    const newRound = currentScores.map(score => Number(score));
+    setRounds([...rounds, newRound]);
+    setCurrentScores(Array(players.length).fill(""));
   };
+  
+  const totalScores = useMemo(() => {
+    return players.map((_, playerIndex) => {
+      return rounds.reduce((total, round) => total + (round[playerIndex] || 0), 0);
+    });
+  }, [rounds, players]);
 
-  const handleNewGame = () => {
+
+  const handleResetScores = () => {
+    setRounds([]);
+    setCurrentScores(Array(players.length).fill(""));
+  }
+
+  const handleFinishGame = () => {
     setPlayers([]);
     setRounds([]);
-    setCurrentScores({});
+    setCurrentScores([]);
     setNewPlayerName("");
-    setGamePhase("setup");
-  };
+  }
 
-  const totalScores = useMemo(() => {
-    const totals: Record<Player["id"], number> = {};
-    players.forEach((player) => {
-      totals[player.id] = rounds.reduce(
-        (acc, round) => acc + (round.scores[player.id] ?? 0),
-        0
-      );
-    });
-    return totals;
-  }, [players, rounds]);
-
-  const overallWinnerIds = useMemo(() => {
-    if (players.length === 0 || rounds.length === 0) return [];
-
-    const scores = Object.values(totalScores);
-    const minScore = Math.min(...scores);
-    
-    return players
-      .filter((player) => totalScores[player.id] === minScore)
-      .map((player) => player.id);
-  }, [totalScores, players, rounds]);
-
-  const renderSetupPhase = () => (
-    <Card className="w-full max-w-2xl mx-auto animate-in fade-in-0 duration-500 shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-xl font-medium">Game Setup</CardTitle>
-        <CardDescription>Add players to the game. You need at least two to start.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Player Name"
-            value={newPlayerName}
-            onChange={(e) => setNewPlayerName(e.target.value)}
-            onKeyDown={handleAddPlayerOnEnter}
-            aria-label="New player name"
-          />
-          <Button onClick={handleAddPlayer} aria-label="Add Player">
-            <UserPlus className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="space-y-2">
-            <h4 className="font-medium text-sm text-muted-foreground">Players:</h4>
-            {players.length > 0 ? (
-                <ul className="grid grid-cols-2 gap-2">
-                    {players.map((player, index) => (
-                        <li key={player.id} className="bg-muted/50 p-2 rounded-md text-sm font-medium">{index + 1}. {player.name}</li>
-                    ))}
-                </ul>
-            ) : (
-                <p className="text-sm text-center text-muted-foreground py-4">No players added yet.</p>
-            )}
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={handleStartGame} disabled={players.length < 2} className="w-full uppercase tracking-wide">
-          Start Game
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-
-  const renderPlayingPhase = () => (
-     <Card className="animate-in fade-in-0 duration-500 w-full shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-xl font-medium">Scoreboard</CardTitle>
-        <CardDescription>Enter scores for each round. The lowest total score wins.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-bold w-[100px] min-w-[100px]">Round</TableHead>
-                {players.map(player => (
-                  <TableHead key={player.id} className="text-center font-semibold min-w-[120px]">{player.name}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rounds.map(round => (
-                <TableRow key={round.roundNumber} className="hover:bg-muted/20">
-                  <TableCell className="font-medium text-muted-foreground">{round.roundNumber}</TableCell>
-                  {players.map(player => (
-                    <TableCell key={player.id} className="text-center">{round.scores[player.id] ?? '-'}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-              <TableRow className="bg-muted/10">
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                   <PlusCircle className="h-4 w-4 text-accent"/>
-                   <span>Round {rounds.length + 1}</span>
-                  </div>
-                </TableCell>
-                {players.map(player => (
-                  <TableCell key={player.id}>
-                    <Input
-                      type="number"
-                      placeholder="Score"
-                      value={currentScores[player.id] || ""}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => handleScoreChange(player.id, e.target.value)}
-                      className="text-center"
-                      aria-label={`Score for ${player.name} in round ${rounds.length + 1}`}
-                    />
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableBody>
-            <TableFooter>
-              <TableRow className="bg-secondary hover:bg-secondary/90">
-                <TableHead className="font-bold text-lg text-secondary-foreground">Total</TableHead>
-                {players.map(player => (
-                  <TableCell key={player.id} className="text-center font-bold text-xl text-accent">
-                    <div className="flex items-center justify-center gap-2">
-                       {totalScores[player.id]}
-                       {overallWinnerIds.includes(player.id) && <Crown className="h-6 w-6 text-yellow-400" />}
-                    </div>
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableFooter>
-          </Table>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={handleSaveRound} className="w-full md:w-auto md:ml-auto uppercase tracking-wide bg-accent text-accent-foreground hover:bg-accent/90">
-          Save Round {rounds.length + 1}
-        </Button>
-      </CardFooter>
-    </Card>
-  );
 
   return (
-    <main className="flex flex-col items-center p-4 bg-background min-h-screen">
-      <header className="w-full max-w-5xl mb-4 p-4 bg-primary text-primary-foreground shadow-md rounded-b-lg">
-        <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Trophy className="w-8 h-8 text-accent" />
-              <div>
-                  <h1 className="text-3xl font-bold text-accent">
-                      SKOR REMI
-                  </h1>
-                  <p className="text-xs text-muted-foreground">Dibuat oleh: M01 Software Development</p>
-              </div>
-            </div>
-            <Button variant="ghost" className="hover:bg-primary/80" onClick={handleNewGame}>
-              <RotateCw className="mr-2 h-4 w-4" />
-              New Game
-            </Button>
+    <main className="flex flex-col items-center p-4 bg-background min-h-screen text-foreground">
+      <header className="w-full max-w-2xl mb-6 text-center">
+        <div className="flex items-center justify-center gap-3">
+          <Trophy className="w-10 h-10 text-accent" />
+          <h1 className="text-5xl font-bold text-accent">
+            SKOR REMI
+          </h1>
         </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Dibuat oleh: M01 Software Development
+        </p>
       </header>
-      <div className="w-full max-w-5xl">
-        {gamePhase === 'setup' ? renderSetupPhase() : renderPlayingPhase()}
+
+      <div className="w-full max-w-2xl flex flex-col gap-4">
+        {/* --- CONTROLS --- */}
+        <div className="flex justify-center gap-2">
+           <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <Plus className="mr-2" /> Add Player
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Add a New Player</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Enter the name of the player you want to add to the game.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="py-4">
+                    <Input
+                        placeholder="Player Name"
+                        value={newPlayerName}
+                        onChange={(e) => setNewPlayerName(e.target.value)}
+                        onKeyDown={handleAddPlayerOnEnter}
+                        aria-label="New player name"
+                        autoFocus
+                    />
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleAddPlayer}>Add</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+
+          <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleNewRound}>
+            <Plus className="mr-2" /> New Round
+          </Button>
+          <Button variant="outline">
+            <History className="mr-2"/> Winner History
+          </Button>
+        </div>
+
+        {/* --- GAME AREA --- */}
+        <div className="border border-border rounded-lg p-4 min-h-[300px] flex flex-col gap-4">
+          {/* --- Players --- */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {players.map((player, index) => (
+              <div key={player.id} className="text-center">
+                <p className="font-semibold text-lg">{player.name}</p>
+                 <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleCutPlayer(player.id)}>
+                   <Trash2 className="mr-1 h-3 w-3" /> Cut
+                 </Button>
+              </div>
+            ))}
+          </div>
+
+            {players.length > 0 && <div className="border-b border-border -mx-4"></div>}
+
+          {/* --- Score History --- */}
+          <div className="flex-grow space-y-2">
+             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {rounds.map((round, roundIndex) => (
+                  round.map((score, playerIndex) => (
+                     <div key={`${roundIndex}-${playerIndex}`} className="bg-accent text-accent-foreground rounded-md p-2 text-center text-xl font-bold">
+                        {score}
+                     </div>
+                  ))
+                ))}
+             </div>
+          </div>
+          
+           {/* --- Current Score Input --- */}
+           {players.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {players.map((player, index) => (
+                <div key={player.id} className="text-center">
+                    <Input
+                    type="number"
+                    placeholder="0"
+                    value={currentScores[index]}
+                    onChange={(e) => {
+                        const newScores = [...currentScores];
+                        newScores[index] = e.target.value;
+                        setCurrentScores(newScores);
+                    }}
+                    className="text-center bg-yellow-200/20 border-yellow-400 text-yellow-200 placeholder:text-yellow-200/50 text-xl font-bold h-12"
+                    />
+                </div>
+                ))}
+            </div>
+           )}
+
+        </div>
+
+         {/* --- TOTALS & FOOTER --- */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+             {players.map((player, index) => (
+                 <div key={player.id} className="bg-yellow-300/80 text-background rounded-md p-2 text-center text-2xl font-bold">
+                    {totalScores[index] || 0}
+                 </div>
+              ))}
+        </div>
+
+        <div className="flex justify-center gap-2 mt-4">
+          <Button variant="outline" onClick={handleResetScores}>
+            <RotateCw className="mr-2" /> Reset Scores
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+               <Button variant="destructive">
+                  <Trophy className="mr-2" /> Finish Game
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure you want to finish the game?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This will clear all players and scores. This action cannot be undone.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleFinishGame} className="bg-destructive hover:bg-destructive/90">Finish Game</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </div>
       </div>
     </main>
   );
