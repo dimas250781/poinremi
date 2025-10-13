@@ -529,7 +529,7 @@ export default function ScoreboardPage() {
                 <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
                     {sortedPlayers.map(({ totalScore, id, color }) => (
                         <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold", color.bg, color.text)}>
-                            {totalScore || 0}
+                            {totalScore || ''}
                         </div>
                       ))}
                 </div>
