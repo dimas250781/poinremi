@@ -48,10 +48,24 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+
+const playerColors = [
+  { id: 'default', name: 'Default', bg: 'bg-accent/20', text: 'text-accent-foreground', border: 'border-border', headerBg: 'bg-card' },
+  { id: 'red', name: 'Red', bg: 'bg-red-900/50', text: 'text-red-300', border: 'border-red-500/50', headerBg: 'bg-red-900/30' },
+  { id: 'blue', name: 'Blue', bg: 'bg-blue-900/50', text: 'text-blue-300', border: 'border-blue-500/50', headerBg: 'bg-blue-900/30' },
+  { id: 'green', name: 'Green', bg: 'bg-green-900/50', text: 'text-green-300', border: 'border-green-500/50', headerBg: 'bg-green-900/30' },
+  { id: 'yellow', name: 'Yellow', bg: 'bg-yellow-900/50', text: 'text-yellow-300', border: 'border-yellow-500/50', headerBg: 'bg-yellow-900/30' },
+  { id: 'purple', name: 'Purple', bg: 'bg-purple-900/50', text: 'text-purple-300', border: 'border-purple-500/50', headerBg: 'bg-purple-900/30' },
+  { id: 'pink', name: 'Pink', bg: 'bg-pink-900/50', text: 'text-pink-300', border: 'border-pink-500/50', headerBg: 'bg-pink-900/30' },
+];
+
+type PlayerColor = typeof playerColors[number];
 
 type Player = {
   id: number;
   name: string;
+  color: PlayerColor;
 };
 
 type PlayerWithScore = Player & {
@@ -70,6 +84,7 @@ type GameResult = {
 export default function ScoreboardPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [newPlayerName, setNewPlayerName] = useState("");
+  const [newPlayerColor, setNewPlayerColor] = useState<PlayerColor>(playerColors[0]);
   const [rounds, setRounds] = useState<Round[]>([]);
   const [currentScores, setCurrentScores] = useState<(string | number)[]>([]);
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
@@ -83,9 +98,11 @@ export default function ScoreboardPage() {
       const newPlayer: Player = {
         id: Date.now(),
         name: newPlayerName.trim(),
+        color: newPlayerColor,
       };
       setPlayers([...players, newPlayer]);
       setNewPlayerName("");
+      setNewPlayerColor(playerColors[0]);
       setCurrentScores([...currentScores, ""]);
       setIsAddPlayerDialogOpen(false);
     }
@@ -257,10 +274,10 @@ export default function ScoreboardPage() {
                   <AlertDialogHeader>
                   <AlertDialogTitle>Add a New Player</AlertDialogTitle>
                   <AlertDialogDescription>
-                      Enter the name of the player you want to add to the game.
+                      Enter player's name and choose a color for their column.
                   </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <div className="py-4">
+                  <div className="py-4 space-y-4">
                       <Input
                           placeholder="Player Name"
                           value={newPlayerName}
@@ -269,6 +286,21 @@ export default function ScoreboardPage() {
                           aria-label="New player name"
                           autoFocus
                       />
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {playerColors.map(color => (
+                          <button
+                            key={color.id}
+                            type="button"
+                            onClick={() => setNewPlayerColor(color)}
+                            className={cn(
+                              "w-8 h-8 rounded-full border-2",
+                              color.bg.replace('/20', '/50').replace('/50','/70'),
+                              newPlayerColor.id === color.id ? 'ring-2 ring-offset-2 ring-ring ring-offset-background' : ''
+                            )}
+                            aria-label={`Select ${color.name} color`}
+                          />
+                        ))}
+                      </div>
                   </div>
                   <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -276,7 +308,6 @@ export default function ScoreboardPage() {
                   </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-
 
             <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleNewRound} disabled={players.length === 0}>
               <Plus className="mr-2" /> New Round
@@ -371,8 +402,8 @@ export default function ScoreboardPage() {
           <div className="p-4 space-y-2">
             {rounds.map((round, roundIndex) => (
               <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                {sortedPlayers.map(({ originalIndex }) => (
-                  <div key={`${roundIndex}-${originalIndex}`} className="bg-accent/20 text-accent-foreground rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12">
+                {sortedPlayers.map(({ originalIndex, color }) => (
+                  <div key={`${roundIndex}-${originalIndex}`} className={cn("rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12", color.bg, color.text)}>
                       {round[originalIndex]}
                   </div>
                 ))}
@@ -380,14 +411,19 @@ export default function ScoreboardPage() {
             ))}
             {players.length > 0 && (
               <div className={`grid gap-4 mt-2`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                  {sortedPlayers.map(({ originalIndex, id }) => (
+                  {sortedPlayers.map(({ originalIndex, id, color }) => (
                   <div key={id} className="text-center">
                       <Input
                         type="text"
+                        inputMode="numeric"
                         placeholder="0"
                         value={currentScores[originalIndex]}
                         onChange={(e) => handleScoreChange(originalIndex, e.target.value)}
-                        className={`text-center bg-card border-border text-foreground placeholder:text-muted-foreground text-xl font-bold h-12`}
+                        className={cn(
+                          `text-center border-border text-foreground placeholder:text-muted-foreground text-xl font-bold h-12`,
+                          color.headerBg,
+                          color.border
+                        )}
                       />
                   </div>
                   ))}
@@ -402,8 +438,8 @@ export default function ScoreboardPage() {
               {/* Total Scores */}
               <div className="p-4">
                 <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                    {sortedPlayers.map(({ totalScore, id }) => (
-                        <div key={id} className="bg-primary text-primary-foreground rounded-md p-2 text-center text-2xl font-bold">
+                    {sortedPlayers.map(({ totalScore, id, color }) => (
+                        <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold", color.bg, color.text)}>
                             {totalScore || 0}
                         </div>
                       ))}
@@ -458,3 +494,5 @@ export default function ScoreboardPage() {
     </main>
   );
 }
+
+    
