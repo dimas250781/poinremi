@@ -45,13 +45,13 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const playerColors = [
-  { id: 'default', name: 'Default', bg: 'bg-accent/20', border: 'border-border', headerBg: 'bg-card' },
-  { id: 'red', name: 'Red', bg: 'bg-red-500', border: 'border-red-500' },
-  { id: 'blue', name: 'Blue', bg: 'bg-blue-500', border: 'border-blue-500' },
-  { id: 'green', name: 'Green', bg: 'bg-green-500', border: 'border-green-500' },
-  { id: 'yellow', name: 'Yellow', bg: 'bg-yellow-500', border: 'border-yellow-500' },
-  { id: 'purple', name: 'Purple', bg: 'bg-purple-500', border: 'border-purple-500' },
-  { id: 'pink', name: 'Pink', bg: 'bg-pink-500', border: 'border-pink-500' },
+  { id: 'default', name: 'Default', bg: 'bg-accent/20', border: 'border-border', headerBg: 'bg-card', text: 'text-foreground' },
+  { id: 'red', name: 'Red', bg: 'bg-red-500', border: 'border-red-500', text: 'text-white' },
+  { id: 'blue', name: 'Blue', bg: 'bg-blue-500', border: 'border-blue-500', text: 'text-white' },
+  { id: 'green', name: 'Green', bg: 'bg-green-500', border: 'border-green-500', text: 'text-white' },
+  { id: 'yellow', name: 'Yellow', bg: 'bg-yellow-500', border: 'border-yellow-500', text: 'text-black' },
+  { id: 'purple', name: 'Purple', bg: 'bg-purple-500', border: 'border-purple-500', text: 'text-white' },
+  { id: 'pink', name: 'Pink', bg: 'bg-pink-500', border: 'border-pink-500', text: 'text-white' },
 ];
 
 type PlayerColor = typeof playerColors[number];
@@ -138,22 +138,22 @@ export default function ScoreboardPage() {
     const playerIndex = players.findIndex(p => p.id === playerIdToCut);
     if (playerIndex === -1) return;
 
-    // Calculate the total score for the player up to this point, including current input
-    const totalFromRounds = rounds.reduce((acc: number, round: any) => acc + Number(round[playerIndex] || 0), 0);
-    const currentInputScore = Number(currentScores[playerIndex] || 0);
-    const totalToSubtract = totalFromRounds + currentInputScore;
+    // Set all past scores for this player to 0
+    const newRounds = rounds.map(round => {
+        const updatedRound = [...round];
+        updatedRound[playerIndex] = 0;
+        return updatedRound;
+    });
+    setRounds(newRounds);
 
-    // Create a new round with a corrective (negative) score for that player
-    const correctiveRound = Array(players.length).fill(0);
-    correctiveRound[playerIndex] = -totalToSubtract;
-    
-    setRounds(prevRounds => [...prevRounds, correctiveRound]);
-    // Reset current scores after cutting
-    setCurrentScores(Array(players.length).fill(""));
+    // Set current input score for this player to 0
+    const newCurrentScores = [...currentScores];
+    newCurrentScores[playerIndex] = "0";
+    setCurrentScores(newCurrentScores);
 
     toast({
         title: "Score Cut",
-        description: `The total score for ${players[playerIndex].name} has been reset to 0.`,
+        description: `All scores for ${players[playerIndex].name} have been reset to 0.`,
     });
   };
 
@@ -492,7 +492,7 @@ export default function ScoreboardPage() {
               {rounds.map((round, roundIndex) => (
                 <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                   {sortedPlayers.map(({ originalIndex, color }) => (
-                    <div key={`${roundIndex}-${originalIndex}`} className={cn("rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12", color.bg.replace('500', '900'), color.text)}>
+                    <div key={`${roundIndex}-${originalIndex}`} className={cn("rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12", color.bg, color.text)}>
                         {round[originalIndex]}
                     </div>
                   ))}
@@ -526,7 +526,7 @@ export default function ScoreboardPage() {
               <div className="p-4">
                 <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                     {sortedPlayers.map(({ totalScore, id, color }) => (
-                        <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold", color.bg.replace('500','900'), color.text)}>
+                        <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold", color.bg, color.text)}>
                             {totalScore || 0}
                         </div>
                       ))}
@@ -627,4 +627,3 @@ export default function ScoreboardPage() {
       </AlertDialog>
     </main>
   );
-}
