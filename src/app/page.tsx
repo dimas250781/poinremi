@@ -45,13 +45,13 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const playerColors = [
-  { id: 'default', name: 'Default', bg: 'bg-accent/20', text: 'text-accent-foreground', border: 'border-border', headerBg: 'bg-card' },
-  { id: 'red', name: 'Red', bg: 'bg-red-900/50', text: 'text-red-300', border: 'border-red-500/50', headerBg: 'bg-red-900/30' },
-  { id: 'blue', name: 'Blue', bg: 'bg-blue-900/50', text: 'text-blue-300', border: 'border-blue-500/50', headerBg: 'bg-blue-900/30' },
-  { id: 'green', name: 'Green', bg: 'bg-green-900/50', text: 'text-green-300', border: 'border-green-500/50', headerBg: 'bg-green-900/30' },
-  { id: 'yellow', name: 'Yellow', bg: 'bg-yellow-900/50', text: 'text-yellow-300', border: 'border-yellow-500/50', headerBg: 'bg-yellow-900/30' },
-  { id: 'purple', name: 'Purple', bg: 'bg-purple-900/50', text: 'text-purple-300', border: 'border-purple-500/50', headerBg: 'bg-purple-900/30' },
-  { id: 'pink', name: 'Pink', bg: 'bg-pink-900/50', text: 'text-pink-300', border: 'border-pink-500/50', headerBg: 'bg-pink-900/30' },
+  { id: 'default', name: 'Default', bg: 'bg-accent/20', border: 'border-border', headerBg: 'bg-card' },
+  { id: 'red', name: 'Red', bg: 'bg-red-500', border: 'border-red-500' },
+  { id: 'blue', name: 'Blue', bg: 'bg-blue-500', border: 'border-blue-500' },
+  { id: 'green', name: 'Green', bg: 'bg-green-500', border: 'border-green-500' },
+  { id: 'yellow', name: 'Yellow', bg: 'bg-yellow-500', border: 'border-yellow-500' },
+  { id: 'purple', name: 'Purple', bg: 'bg-purple-500', border: 'border-purple-500' },
+  { id: 'pink', name: 'Pink', bg: 'bg-pink-500', border: 'border-pink-500' },
 ];
 
 type PlayerColor = typeof playerColors[number];
@@ -363,8 +363,8 @@ export default function ScoreboardPage() {
                               onClick={() => setNewPlayerColor(color)}
                               className={cn(
                                 "w-8 h-8 rounded-full border-2",
-                                color.bg.split('/')[0],
-                                newPlayerColor.id === color.id ? 'ring-2 ring-offset-2 ring-ring ring-offset-background' : '',
+                                color.bg,
+                                newPlayerColor.id === color.id ? 'ring-2 ring-offset-2 ring-ring ring-offset-background' : 'border-transparent',
                                 isUsed && 'opacity-25 cursor-not-allowed'
                               )}
                               aria-label={`Select ${color.name} color`}
@@ -490,7 +490,7 @@ export default function ScoreboardPage() {
             {rounds.map((round, roundIndex) => (
               <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                 {sortedPlayers.map(({ originalIndex, color }) => (
-                  <div key={`${roundIndex}-${originalIndex}`} className={cn("rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12", color.bg, color.text)}>
+                  <div key={`${roundIndex}-${originalIndex}`} className={cn("rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12 bg-opacity-30", color.bg.replace('500', '900'), color.text)}>
                       {round[originalIndex]}
                   </div>
                 ))}
@@ -507,9 +507,8 @@ export default function ScoreboardPage() {
                         value={currentScores[originalIndex]}
                         onChange={(e) => handleScoreChange(originalIndex, e.target.value)}
                         className={cn(
-                          `text-center border-border text-foreground placeholder:text-muted-foreground text-xl font-bold h-12`,
-                          color.headerBg,
-                          color.border
+                          `text-center border-2 text-foreground placeholder:text-muted-foreground text-xl font-bold h-12`,
+                           color.border, 'bg-transparent'
                         )}
                       />
                   </div>
@@ -524,7 +523,7 @@ export default function ScoreboardPage() {
               <div className="p-4">
                 <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                     {sortedPlayers.map(({ totalScore, id, color }) => (
-                        <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold", color.bg, color.text)}>
+                        <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold bg-opacity-50", color.bg.replace('500','900'), color.text)}>
                             {totalScore || 0}
                         </div>
                       ))}
@@ -595,7 +594,11 @@ export default function ScoreboardPage() {
                     autoFocus
                 />
             </div>
-            <AlertDialogFooter className="justify-between">
+            <AlertDialogFooter className="justify-between w-full flex-row-reverse">
+                <div className="flex gap-2">
+                    <AlertDialogCancel onClick={handleCancelEditPlayer}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleUpdatePlayerName}>Save Name</AlertDialogAction>
+                </div>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive">
@@ -615,14 +618,11 @@ export default function ScoreboardPage() {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
-                <div className="flex gap-2">
-                    <AlertDialogCancel onClick={handleCancelEditPlayer}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleUpdatePlayerName}>Save Name</AlertDialogAction>
-                </div>
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </main>
   );
+}
 
     
