@@ -449,18 +449,18 @@ export default function ScoreboardPage() {
           <div className="flex-shrink-0 p-4 border-t border-b border-border">
             <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
               {sortedPlayers.map((player, idx) => (
-                <div key={player.id} className="text-center">
-                  <div className="flex items-center justify-center gap-1 break-words">
-                      <Button variant="link" className="p-0 h-auto font-semibold text-lg text-foreground" onClick={() => handleStartEditPlayer(player)}>
-                        {player.name}
-                      </Button>
+                <div key={player.id} className="text-center flex flex-col items-center justify-start h-20">
+                  <div className="h-5">
                       {sortedPlayers.length > 1 && idx === 0 && player.totalScore > 0 && (
-                          <ThumbsUp className="w-4 h-4 text-yellow-400 fill-yellow-400 shrink-0" />
+                          <ThumbsUp className="w-5 h-5 text-yellow-400 fill-yellow-400 shrink-0" />
                       )}
                       {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore < 0 && (
-                          <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500 shrink-0" />
+                          <ThumbsDown className="w-5 h-5 text-red-500 fill-red-500 shrink-0" />
                       )}
                   </div>
+                  <Button variant="link" className="p-0 h-auto font-semibold text-lg text-foreground break-words" onClick={() => handleStartEditPlayer(player)}>
+                    {player.name}
+                  </Button>
                    <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs">
