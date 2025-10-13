@@ -90,6 +90,8 @@ export default function ScoreboardPage() {
   
   const { toast } = useToast();
 
+  const usedPlayerColors = useMemo(() => new Set(players.map(p => p.color.id)), [players]);
+
   const handleAddPlayer = () => {
     if (newPlayerName.trim()) {
       const newPlayer: Player = {
@@ -99,7 +101,9 @@ export default function ScoreboardPage() {
       };
       setPlayers([...players, newPlayer]);
       setNewPlayerName("");
-      setNewPlayerColor(playerColors[0]);
+      // Reset to first available color
+      const firstAvailableColor = playerColors.find(c => !usedPlayerColors.has(c.id) && c.id !== newPlayerColor.id) || playerColors[0];
+      setNewPlayerColor(firstAvailableColor);
       setCurrentScores([...currentScores, ""]);
       setIsAddPlayerDialogOpen(false);
     }
@@ -248,6 +252,12 @@ export default function ScoreboardPage() {
     }
   };
 
+  useEffect(() => {
+    const firstAvailableColor = playerColors.find(c => !usedPlayerColors.has(c.id));
+    if (firstAvailableColor) {
+      setNewPlayerColor(firstAvailableColor);
+    }
+  }, [isAddPlayerDialogOpen, usedPlayerColors]);
 
   useEffect(() => {
     if (players.length === 0) return;
@@ -312,19 +322,24 @@ export default function ScoreboardPage() {
                           type="text"
                       />
                       <div className="flex flex-wrap gap-2 justify-center">
-                        {playerColors.map(color => (
-                          <button
-                            key={color.id}
-                            type="button"
-                            onClick={() => setNewPlayerColor(color)}
-                            className={cn(
-                              "w-8 h-8 rounded-full border-2",
-                              color.bg,
-                              newPlayerColor.id === color.id ? 'ring-2 ring-offset-2 ring-ring ring-offset-background' : ''
-                            )}
-                            aria-label={`Select ${color.name} color`}
-                          />
-                        ))}
+                        {playerColors.map(color => {
+                          const isUsed = usedPlayerColors.has(color.id);
+                          return (
+                            <button
+                              key={color.id}
+                              type="button"
+                              disabled={isUsed}
+                              onClick={() => setNewPlayerColor(color)}
+                              className={cn(
+                                "w-8 h-8 rounded-full border-2",
+                                color.bg,
+                                newPlayerColor.id === color.id ? 'ring-2 ring-offset-2 ring-ring ring-offset-background' : '',
+                                isUsed && 'opacity-25 cursor-not-allowed'
+                              )}
+                              aria-label={`Select ${color.name} color`}
+                            />
+                          )
+                        })}
                       </div>
                   </div>
                   <AlertDialogFooter>
