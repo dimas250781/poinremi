@@ -139,15 +139,14 @@ export default function ScoreboardPage() {
 
     setRounds(prevRounds => {
         const newRounds = JSON.parse(JSON.stringify(prevRounds));
+        // Calculate the total score for the player up to this point
         const totalToSubtract = newRounds.reduce((acc: number, round: any) => acc + Number(round[playerIndex] || 0), 0);
         
-        if (newRounds.length > 0) {
-            newRounds[newRounds.length - 1][playerIndex] -= totalToSubtract;
-        } else {
-             newRounds.push(Array(players.length).fill(0));
-             newRounds[0][playerIndex] = -totalToSubtract;
-        }
-        return newRounds;
+        // Create a new round with a corrective (negative) score for that player
+        const correctiveRound = Array(players.length).fill(0);
+        correctiveRound[playerIndex] = -totalToSubtract;
+
+        return [...newRounds, correctiveRound];
     });
 
     toast({
@@ -344,13 +343,13 @@ export default function ScoreboardPage() {
                   </AlertDialogHeader>
                   <div className="py-4 space-y-4">
                       <Input
+                          type="text"
                           placeholder="Player Name"
                           value={newPlayerName}
                           onChange={(e) => setNewPlayerName(e.target.value)}
                           onKeyDown={handleAddPlayerOnEnter}
                           aria-label="New player name"
                           autoFocus
-                          type="text"
                       />
                       <div className="flex flex-wrap gap-2 justify-center">
                         {playerColors.filter(c => c.id !== 'default').map(color => {
@@ -485,45 +484,47 @@ export default function ScoreboardPage() {
           </div>
         )}
 
-        <ScrollArea className="flex-grow">
-          <div className="p-4 space-y-2">
-            {rounds.map((round, roundIndex) => (
-              <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                {sortedPlayers.map(({ originalIndex, color }) => (
-                  <div key={`${roundIndex}-${originalIndex}`} className={cn("rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12 bg-opacity-30", color.bg.replace('500', '900'), color.text)}>
-                      {round[originalIndex]}
-                  </div>
-                ))}
-              </div>
-            ))}
-            {players.length > 0 && (
-              <div className={`grid gap-4 mt-2`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
-                  {sortedPlayers.map(({ originalIndex, id, color }) => (
-                  <div key={id} className="text-center">
-                      <Input
-                        type="text"
-                        inputMode="text"
-                        placeholder="0"
-                        value={currentScores[originalIndex]}
-                        onChange={(e) => handleScoreChange(originalIndex, e.target.value)}
-                        className={cn(
-                          `text-center border-2 text-foreground placeholder:text-muted-foreground text-xl font-bold h-12`,
-                           color.border, 'bg-transparent'
-                        )}
-                      />
-                  </div>
+        <div className="flex-grow overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-4 space-y-2">
+              {rounds.map((round, roundIndex) => (
+                <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
+                  {sortedPlayers.map(({ originalIndex, color }) => (
+                    <div key={`${roundIndex}-${originalIndex}`} className={cn("rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12", color.bg.replace('500', '900'), color.text)}>
+                        {round[originalIndex]}
+                    </div>
                   ))}
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+                </div>
+              ))}
+              {players.length > 0 && (
+                <div className={`grid gap-4 mt-2`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
+                    {sortedPlayers.map(({ originalIndex, id, color }) => (
+                    <div key={id} className="text-center">
+                        <Input
+                          type="text"
+                          inputMode="text"
+                          placeholder="0"
+                          value={currentScores[originalIndex]}
+                          onChange={(e) => handleScoreChange(originalIndex, e.target.value)}
+                          className={cn(
+                            `text-center border-2 text-foreground placeholder:text-muted-foreground text-xl font-bold h-12`,
+                            color.border, 'bg-transparent'
+                          )}
+                        />
+                    </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
         
         {players.length > 0 && (
           <div className="flex-shrink-0 mt-auto border-t border-border">
               <div className="p-4">
                 <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                     {sortedPlayers.map(({ totalScore, id, color }) => (
-                        <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold bg-opacity-50", color.bg.replace('500','900'), color.text)}>
+                        <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold", color.bg.replace('500','900'), color.text)}>
                             {totalScore || 0}
                         </div>
                       ))}
@@ -592,6 +593,7 @@ export default function ScoreboardPage() {
                     onKeyDown={handleUpdatePlayerOnEnter}
                     aria-label="New player name"
                     autoFocus
+                    type="text"
                 />
             </div>
             <AlertDialogFooter className="justify-between w-full flex-row-reverse">
@@ -623,6 +625,5 @@ export default function ScoreboardPage() {
       </AlertDialog>
     </main>
   );
-}
 
     
