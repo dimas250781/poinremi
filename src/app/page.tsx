@@ -199,6 +199,20 @@ export default function ScoreboardPage() {
       handleUpdatePlayerName();
     }
   };
+  
+  const handleScoreInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      // Check if all score inputs for existing players are filled.
+      const allScoresFilled = players.every((_, index) => {
+        const score = currentScores[index];
+        return score !== "" && score !== undefined;
+      });
+
+      if (allScoresFilled) {
+        handleNewRound();
+      }
+    }
+  };
 
   const handleNewRound = () => {
     if (players.length === 0) return;
@@ -449,9 +463,9 @@ export default function ScoreboardPage() {
         
         {players.length > 0 && (
           <div className="flex-shrink-0 p-4 border-t border-b border-border">
-            <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(80px, 1fr))` }}>
+            <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
               {sortedPlayers.map((player, idx) => (
-                <div key={player.id} className="text-center flex flex-col items-center justify-start h-20">
+                <div key={player.id} className="text-center flex flex-col items-center justify-start h-24">
                   <div className="h-5">
                       {sortedPlayers.length > 1 && idx === 0 && (
                           <ThumbsUp className="w-5 h-5 text-yellow-400 fill-yellow-400 shrink-0" />
@@ -510,6 +524,7 @@ export default function ScoreboardPage() {
                           placeholder="0"
                           value={currentScores[originalIndex] || ''}
                           onChange={(e) => handleScoreChange(originalIndex, e.target.value)}
+                          onKeyDown={handleScoreInputKeyDown}
                           className={cn(
                             `text-center border-2 text-foreground placeholder:text-muted-foreground text-xl font-bold h-12`,
                             color.border, 'bg-transparent'
