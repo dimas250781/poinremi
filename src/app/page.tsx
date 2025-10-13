@@ -148,9 +148,9 @@ export default function ScoreboardPage() {
     });
     setRounds(newRounds);
 
-    // Set current input score for this player to 0
+    // Set current input score for this player to ""
     const newCurrentScores = [...currentScores];
-    newCurrentScores[playerIndex] = 0;
+    newCurrentScores[playerIndex] = "";
     setCurrentScores(newCurrentScores);
 
     toast({
