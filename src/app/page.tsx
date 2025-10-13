@@ -495,7 +495,7 @@ export default function ScoreboardPage() {
                 <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
                   {sortedPlayers.map(({ originalIndex, color }) => (
                     <div key={`${roundIndex}-${originalIndex}`} className={cn("rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12", color.bg, color.text)}>
-                        {round[originalIndex]}
+                        {round[originalIndex] === 0 ? '' : round[originalIndex]}
                     </div>
                   ))}
                 </div>
