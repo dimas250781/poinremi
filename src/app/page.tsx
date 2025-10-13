@@ -132,6 +132,29 @@ export default function ScoreboardPage() {
     });
     handleCancelEditPlayer();
   }
+  
+  const handleCutPlayer = (playerIdToCut: number) => {
+    const playerIndex = players.findIndex(p => p.id === playerIdToCut);
+    if (playerIndex === -1) return;
+
+    setRounds(prevRounds => {
+        const newRounds = JSON.parse(JSON.stringify(prevRounds));
+        const totalToSubtract = newRounds.reduce((acc: number, round: any) => acc + Number(round[playerIndex] || 0), 0);
+        
+        if (newRounds.length > 0) {
+            newRounds[newRounds.length - 1][playerIndex] -= totalToSubtract;
+        } else {
+             newRounds.push(Array(players.length).fill(0));
+             newRounds[0][playerIndex] = -totalToSubtract;
+        }
+        return newRounds;
+    });
+
+    toast({
+        title: "Score Cut",
+        description: `The total score for ${players[playerIndex].name} has been reset to 0.`,
+    });
+  };
 
   const handleDeletePlayer = (playerIdToDelete: number) => {
     const playerIndex = players.findIndex(p => p.id === playerIdToDelete);
@@ -154,6 +177,8 @@ export default function ScoreboardPage() {
     newCurrentScores.splice(playerIndex, 1);
     setCurrentScores(newCurrentScores);
     
+    handleCancelEditPlayer();
+
     toast({
       title: "Player Deleted",
       description: `${playerName} has been removed from the game.`,
@@ -338,7 +363,8 @@ export default function ScoreboardPage() {
                               onClick={() => setNewPlayerColor(color)}
                               className={cn(
                                 "w-8 h-8 rounded-full border-2",
-                                color.bg,
+                                color.bg.replace('bg-accent/20', 'bg-transparent'),
+                                color.id === 'default' ? 'bg-muted' : color.bg.split('/')[0],
                                 newPlayerColor.id === color.id ? 'ring-2 ring-offset-2 ring-ring ring-offset-background' : '',
                                 isUsed && 'opacity-25 cursor-not-allowed'
                               )}
@@ -438,19 +464,19 @@ export default function ScoreboardPage() {
                    <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs">
-                          <Trash2 className="mr-1 h-3 w-3" /> Delete
+                          <Trash2 className="mr-1 h-3 w-3" /> Cut
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Player?</AlertDialogTitle>
+                          <AlertDialogTitle>Cut Score?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete {player.name}? All their scores will be removed. This action cannot be undone.
+                            Are you sure you want to cut {player.name}'s score? Their score will be reset to 0.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeletePlayer(player.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                          <AlertDialogAction onClick={() => handleCutPlayer(player.id)} className="bg-destructive hover:bg-destructive/90">Cut Score</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
@@ -555,9 +581,9 @@ export default function ScoreboardPage() {
       <AlertDialog open={!!editingPlayer} onOpenChange={(open) => !open && handleCancelEditPlayer()}>
         <AlertDialogContent>
             <AlertDialogHeader>
-            <AlertDialogTitle>Rename Player</AlertDialogTitle>
+            <AlertDialogTitle>Edit Player</AlertDialogTitle>
             <AlertDialogDescription>
-                Enter a new name for {editingPlayer?.name}.
+                Update the name or delete the player.
             </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="py-4 space-y-4">
@@ -570,9 +596,30 @@ export default function ScoreboardPage() {
                     autoFocus
                 />
             </div>
-            <AlertDialogFooter>
-                <AlertDialogCancel onClick={handleCancelEditPlayer}>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleUpdatePlayerName}>Save</AlertDialogAction>
+            <AlertDialogFooter className="justify-between">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive">
+                            <Trash2 className="mr-2" /> Delete Player
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Player?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete {editingPlayer?.name}? All their scores will be removed. This action cannot be undone.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeletePlayer(editingPlayer!.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                <div className="flex gap-2">
+                    <AlertDialogCancel onClick={handleCancelEditPlayer}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleUpdatePlayerName}>Save Name</AlertDialogAction>
+                </div>
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
