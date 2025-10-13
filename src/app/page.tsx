@@ -295,7 +295,11 @@ export default function ScoreboardPage() {
   const handleScoreChange = (index: number, value: string) => {
     const newScores = [...currentScores];
     if (/^-?\d*$/.test(value)) {
-      newScores[index] = value;
+      if (currentScores[index] === 0 && value !== '0' && value !== '') {
+        newScores[index] = value.replace(/^0+/, '');
+      } else {
+        newScores[index] = value;
+      }
       setCurrentScores(newScores);
     }
   };
@@ -509,7 +513,7 @@ export default function ScoreboardPage() {
                 <div key={roundIndex} className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
                   {sortedPlayers.map(({ originalIndex, color }) => (
                     <div key={`${roundIndex}-${originalIndex}`} className={cn("rounded-md p-2 text-center text-xl font-bold flex items-center justify-center h-12", color.bg, color.text)}>
-                        {round[originalIndex] === 0 ? '' : round[originalIndex]}
+                        {round[originalIndex] || ''}
                     </div>
                   ))}
                 </div>
@@ -645,3 +649,5 @@ export default function ScoreboardPage() {
     </main>
   );
 }
+
+    
