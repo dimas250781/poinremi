@@ -449,7 +449,7 @@ export default function ScoreboardPage() {
         
         {players.length > 0 && (
           <div className="flex-shrink-0 p-4 border-t border-b border-border">
-            <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
+            <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(80px, 1fr))` }}>
               {sortedPlayers.map((player, idx) => (
                 <div key={player.id} className="text-center flex flex-col items-center justify-start h-20">
                   <div className="h-5">
@@ -529,7 +529,7 @@ export default function ScoreboardPage() {
                 <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
                     {sortedPlayers.map(({ totalScore, id, color }) => (
                         <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold", color.bg, color.text)}>
-                            {totalScore || ''}
+                            {totalScore}
                         </div>
                       ))}
                 </div>
@@ -630,3 +630,5 @@ export default function ScoreboardPage() {
     </main>
   );
 }
+
+    
