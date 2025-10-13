@@ -141,7 +141,9 @@ export default function ScoreboardPage() {
     // Set all past scores for this player to 0
     const newRounds = rounds.map(round => {
         const updatedRound = [...round];
-        updatedRound[playerIndex] = 0;
+        if (updatedRound[playerIndex] !== undefined) {
+          updatedRound[playerIndex] = 0;
+        }
         return updatedRound;
     });
     setRounds(newRounds);
@@ -451,10 +453,10 @@ export default function ScoreboardPage() {
               {sortedPlayers.map((player, idx) => (
                 <div key={player.id} className="text-center flex flex-col items-center justify-start h-20">
                   <div className="h-5">
-                      {sortedPlayers.length > 1 && idx === 0 && player.totalScore > 0 && (
+                      {sortedPlayers.length > 1 && idx === 0 && (
                           <ThumbsUp className="w-5 h-5 text-yellow-400 fill-yellow-400 shrink-0" />
                       )}
-                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore < 0 && (
+                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && (
                           <ThumbsDown className="w-5 h-5 text-red-500 fill-red-500 shrink-0" />
                       )}
                   </div>
