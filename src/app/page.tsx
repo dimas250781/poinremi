@@ -78,7 +78,7 @@ type GameResult = {
 export default function ScoreboardPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [newPlayerName, setNewPlayerName] = useState("");
-  const [newPlayerColor, setNewPlayerColor] = useState<PlayerColor>(playerColors[0]);
+  const [newPlayerColor, setNewPlayerColor] = useState<PlayerColor>(playerColors[1]);
   const [rounds, setRounds] = useState<Round[]>([]);
   const [currentScores, setCurrentScores] = useState<(string | number)[]>([]);
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
@@ -102,7 +102,7 @@ export default function ScoreboardPage() {
       setPlayers([...players, newPlayer]);
       setNewPlayerName("");
       // Reset to first available color
-      const firstAvailableColor = playerColors.find(c => !usedPlayerColors.has(c.id) && c.id !== newPlayerColor.id) || playerColors[0];
+      const firstAvailableColor = playerColors.find(c => !usedPlayerColors.has(c.id) && c.id !== newPlayerColor.id && c.id !== 'default') || playerColors[1];
       setNewPlayerColor(firstAvailableColor);
       setCurrentScores([...currentScores, ""]);
       setIsAddPlayerDialogOpen(false);
@@ -284,7 +284,7 @@ export default function ScoreboardPage() {
   };
 
   useEffect(() => {
-    const firstAvailableColor = playerColors.find(c => !usedPlayerColors.has(c.id));
+    const firstAvailableColor = playerColors.find(c => !usedPlayerColors.has(c.id) && c.id !== 'default');
     if (firstAvailableColor) {
       setNewPlayerColor(firstAvailableColor);
     }
@@ -353,7 +353,7 @@ export default function ScoreboardPage() {
                           type="text"
                       />
                       <div className="flex flex-wrap gap-2 justify-center">
-                        {playerColors.map(color => {
+                        {playerColors.filter(c => c.id !== 'default').map(color => {
                           const isUsed = usedPlayerColors.has(color.id);
                           return (
                             <button
@@ -363,8 +363,7 @@ export default function ScoreboardPage() {
                               onClick={() => setNewPlayerColor(color)}
                               className={cn(
                                 "w-8 h-8 rounded-full border-2",
-                                color.bg.replace('bg-accent/20', 'bg-transparent'),
-                                color.id === 'default' ? 'bg-muted' : color.bg.split('/')[0],
+                                color.bg.split('/')[0],
                                 newPlayerColor.id === color.id ? 'ring-2 ring-offset-2 ring-ring ring-offset-background' : '',
                                 isUsed && 'opacity-25 cursor-not-allowed'
                               )}
