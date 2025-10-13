@@ -101,9 +101,10 @@ export default function ScoreboardPage() {
       };
       setPlayers([...players, newPlayer]);
       setNewPlayerName("");
-      // Reset to first available color
-      const firstAvailableColor = playerColors.find(c => !usedPlayerColors.has(c.id) && c.id !== newPlayerColor.id && c.id !== 'default') || playerColors[1];
-      setNewPlayerColor(firstAvailableColor);
+      const firstAvailableColor = playerColors.find(c => c.id !== 'default' && !usedPlayerColors.has(c.id) && c.id !== newPlayerColor.id) || playerColors.find(c => c.id !== 'default' && !usedPlayerColors.has(c.id));
+      if (firstAvailableColor) {
+        setNewPlayerColor(firstAvailableColor);
+      }
       setCurrentScores([...currentScores, ""]);
       setIsAddPlayerDialogOpen(false);
     }
@@ -137,17 +138,18 @@ export default function ScoreboardPage() {
     const playerIndex = players.findIndex(p => p.id === playerIdToCut);
     if (playerIndex === -1) return;
 
-    setRounds(prevRounds => {
-        const newRounds = JSON.parse(JSON.stringify(prevRounds));
-        // Calculate the total score for the player up to this point
-        const totalToSubtract = newRounds.reduce((acc: number, round: any) => acc + Number(round[playerIndex] || 0), 0);
-        
-        // Create a new round with a corrective (negative) score for that player
-        const correctiveRound = Array(players.length).fill(0);
-        correctiveRound[playerIndex] = -totalToSubtract;
+    // Calculate the total score for the player up to this point, including current input
+    const totalFromRounds = rounds.reduce((acc: number, round: any) => acc + Number(round[playerIndex] || 0), 0);
+    const currentInputScore = Number(currentScores[playerIndex] || 0);
+    const totalToSubtract = totalFromRounds + currentInputScore;
 
-        return [...newRounds, correctiveRound];
-    });
+    // Create a new round with a corrective (negative) score for that player
+    const correctiveRound = Array(players.length).fill(0);
+    correctiveRound[playerIndex] = -totalToSubtract;
+    
+    setRounds(prevRounds => [...prevRounds, correctiveRound]);
+    // Reset current scores after cutting
+    setCurrentScores(Array(players.length).fill(""));
 
     toast({
         title: "Score Cut",
@@ -625,5 +627,4 @@ export default function ScoreboardPage() {
       </AlertDialog>
     </main>
   );
-
-    
+}
