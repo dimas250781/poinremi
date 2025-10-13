@@ -148,7 +148,7 @@ export default function ScoreboardPage() {
 
     // Set current input score for this player to 0
     const newCurrentScores = [...currentScores];
-    newCurrentScores[playerIndex] = "0";
+    newCurrentScores[playerIndex] = 0;
     setCurrentScores(newCurrentScores);
 
     toast({
@@ -471,7 +471,7 @@ export default function ScoreboardPage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Cut Score?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to cut {player.name}'s score? Their score will be reset to 0.
+                            Are you sure you want to cut {player.name}'s score? All their past scores will be reset to 0.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -627,5 +627,4 @@ export default function ScoreboardPage() {
       </AlertDialog>
     </main>
   );
-
-    
+}
