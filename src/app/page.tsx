@@ -364,7 +364,7 @@ export default function ScoreboardPage() {
                               onClick={() => setNewPlayerColor(color)}
                               className={cn(
                                 "w-8 h-8 rounded-full border-2",
-                                color.bg.split('/')[0],
+                                color.bg,
                                 newPlayerColor.id === color.id ? 'ring-2 ring-offset-2 ring-ring ring-offset-background' : 'border-transparent',
                                 isUsed && 'opacity-25 cursor-not-allowed'
                               )}
@@ -457,7 +457,7 @@ export default function ScoreboardPage() {
                       {sortedPlayers.length > 1 && idx === 0 && player.totalScore > 0 && (
                           <ThumbsUp className="w-4 h-4 text-yellow-400 fill-yellow-400 shrink-0" />
                       )}
-                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore < sortedPlayers[0].totalScore && player.totalScore < 0 && (
+                      {sortedPlayers.length > 1 && idx === sortedPlayers.length - 1 && player.totalScore < 0 && (
                           <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500 shrink-0" />
                       )}
                   </div>
