@@ -285,6 +285,7 @@ export default function ScoreboardPage() {
                           onKeyDown={handleAddPlayerOnEnter}
                           aria-label="New player name"
                           autoFocus
+                          type="text"
                       />
                       <div className="flex flex-wrap gap-2 justify-center">
                         {playerColors.map(color => (
@@ -294,7 +295,7 @@ export default function ScoreboardPage() {
                             onClick={() => setNewPlayerColor(color)}
                             className={cn(
                               "w-8 h-8 rounded-full border-2",
-                              color.bg.replace('/20', '/50').replace('/50','/70'),
+                              color.id === 'default' ? color.bg.replace('bg-accent/20', 'bg-accent/50') : color.bg,
                               newPlayerColor.id === color.id ? 'ring-2 ring-offset-2 ring-ring ring-offset-background' : ''
                             )}
                             aria-label={`Select ${color.name} color`}
