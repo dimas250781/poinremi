@@ -508,7 +508,7 @@ export default function ScoreboardPage() {
                           type="text"
                           inputMode="text"
                           placeholder="0"
-                          value={currentScores[originalIndex]}
+                          value={currentScores[originalIndex] || ''}
                           onChange={(e) => handleScoreChange(originalIndex, e.target.value)}
                           className={cn(
                             `text-center border-2 text-foreground placeholder:text-muted-foreground text-xl font-bold h-12`,
@@ -630,5 +630,3 @@ export default function ScoreboardPage() {
     </main>
   );
 }
-
-    
