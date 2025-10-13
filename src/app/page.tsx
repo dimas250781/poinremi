@@ -202,15 +202,7 @@ export default function ScoreboardPage() {
   
   const handleScoreInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      // Check if all score inputs for existing players are filled.
-      const allScoresFilled = players.every((_, index) => {
-        const score = currentScores[index];
-        return score !== "" && score !== undefined;
-      });
-
-      if (allScoresFilled) {
-        handleNewRound();
-      }
+      handleNewRound();
     }
   };
 
