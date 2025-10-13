@@ -33,21 +33,15 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  PlusCircle,
-  RotateCw,
-  Trophy,
-  UserPlus,
   Plus,
   Trash2,
   History,
   ThumbsUp,
   ThumbsDown,
-  X,
   RotateCcw,
-  ArrowLeft
+  Trophy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 const playerColors = [
@@ -91,6 +85,9 @@ export default function ScoreboardPage() {
   const [winner, setWinner] = useState<string | null>(null);
   const [isWinnerDialogOpen, setIsWinnerDialogOpen] = useState(false);
   const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [editingPlayerName, setEditingPlayerName] = useState("");
+  
   const { toast } = useToast();
 
   const handleAddPlayer = () => {
@@ -107,6 +104,30 @@ export default function ScoreboardPage() {
       setIsAddPlayerDialogOpen(false);
     }
   };
+  
+  const handleStartEditPlayer = (player: Player) => {
+    setEditingPlayer(player);
+    setEditingPlayerName(player.name);
+  }
+
+  const handleCancelEditPlayer = () => {
+    setEditingPlayer(null);
+    setEditingPlayerName("");
+  }
+  
+  const handleUpdatePlayerName = () => {
+    if(!editingPlayer || !editingPlayerName.trim()) return;
+    
+    setPlayers(players.map(p => 
+      p.id === editingPlayer.id ? { ...p, name: editingPlayerName.trim() } : p
+    ));
+    
+    toast({
+      title: "Success",
+      description: `Player name updated to ${editingPlayerName.trim()}`
+    });
+    handleCancelEditPlayer();
+  }
 
   const handleResetPlayerScore = (playerIdToReset: number) => {
     const playerIndex = players.findIndex(p => p.id === playerIdToReset);
@@ -134,11 +155,16 @@ export default function ScoreboardPage() {
       handleAddPlayer();
     }
   };
+  
+  const handleUpdatePlayerOnEnter = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleUpdatePlayerName();
+    }
+  };
 
   const handleNewRound = () => {
     if (players.length === 0) return;
     
-    // Convert empty strings to 0 before adding to rounds
     const newRound = currentScores.map(score => score === '' || score === '-' ? 0 : Number(score));
     
     setRounds([...rounds, newRound]);
@@ -216,7 +242,6 @@ export default function ScoreboardPage() {
 
   const handleScoreChange = (index: number, value: string) => {
     const newScores = [...currentScores];
-    // Allow only numbers and a single leading minus sign
     if (/^-?\d*$/.test(value)) {
       newScores[index] = value;
       setCurrentScores(newScores);
@@ -236,12 +261,12 @@ export default function ScoreboardPage() {
         .sort((a, b) => b.score - a.score)[0];
 
     if (winnerCheck && winnerCheck.score >= 1000) {
-      if (!winner) { // Only set winner if not already set
+      if (!winner) {
         setWinner(winnerCheck.name);
         setIsWinnerDialogOpen(true);
       }
     } else {
-      setWinner(null); // Reset winner if no one is above 1000
+      setWinner(null);
     }
   }, [rounds, currentScores, players, winner]);
 
@@ -249,7 +274,6 @@ export default function ScoreboardPage() {
     <main className="flex flex-col items-center justify-center p-4 bg-gray-800 min-h-screen text-foreground">
       <div className="w-full max-w-sm h-[90vh] max-h-[800px] flex flex-col bg-background rounded-2xl shadow-2xl overflow-hidden">
         
-        {/* Header - Not scrollable */}
         <div className="flex-shrink-0 p-4">
           <header className="w-full mb-6 text-center">
             <div className="flex items-center justify-center gap-3">
@@ -295,7 +319,7 @@ export default function ScoreboardPage() {
                             onClick={() => setNewPlayerColor(color)}
                             className={cn(
                               "w-8 h-8 rounded-full border-2",
-                              color.id === 'default' ? color.bg.replace('bg-accent/20', 'bg-accent/50') : color.bg,
+                              color.bg,
                               newPlayerColor.id === color.id ? 'ring-2 ring-offset-2 ring-ring ring-offset-background' : ''
                             )}
                             aria-label={`Select ${color.name} color`}
@@ -309,7 +333,7 @@ export default function ScoreboardPage() {
                   </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-
+            
             <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleNewRound} disabled={players.length === 0}>
               <Plus className="mr-2" /> New Round
             </Button>
@@ -374,14 +398,15 @@ export default function ScoreboardPage() {
           </div>
         </div>
         
-        {/* Player Names - Not scrollable */}
         {players.length > 0 && (
           <div className="flex-shrink-0 p-4 border-t border-b border-border">
             <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
               {sortedPlayers.map((player, idx) => (
                 <div key={player.id} className="text-center">
                   <div className="flex items-center justify-center gap-1">
-                      <p className="font-semibold text-lg truncate">{player.name}</p>
+                      <Button variant="link" className="p-0 h-auto font-semibold text-lg truncate text-foreground" onClick={() => handleStartEditPlayer(player)}>
+                        {player.name}
+                      </Button>
                       {sortedPlayers.length > 1 && idx === 0 && player.totalScore > 0 && (
                           <ThumbsUp className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                       )}
@@ -398,7 +423,6 @@ export default function ScoreboardPage() {
           </div>
         )}
 
-        {/* Scrollable Content Area */}
         <ScrollArea className="flex-grow">
           <div className="p-4 space-y-2">
             {rounds.map((round, roundIndex) => (
@@ -433,10 +457,8 @@ export default function ScoreboardPage() {
           </div>
         </ScrollArea>
         
-        {/* Footer - Not scrollable */}
         {players.length > 0 && (
           <div className="flex-shrink-0 mt-auto border-t border-border">
-              {/* Total Scores */}
               <div className="p-4">
                 <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, 1fr)` }}>
                     {sortedPlayers.map(({ totalScore, id, color }) => (
@@ -447,7 +469,6 @@ export default function ScoreboardPage() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="p-4 border-t border-border">
                 <div className="flex justify-center gap-2">
                   <Button variant="outline" onClick={handleUndoRound} disabled={rounds.length === 0}>
@@ -477,6 +498,7 @@ export default function ScoreboardPage() {
           </div>
         )}
       </div>
+
        <AlertDialog open={isWinnerDialogOpen} onOpenChange={setIsWinnerDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -491,9 +513,33 @@ export default function ScoreboardPage() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-        </AlertDialog>
+      </AlertDialog>
+
+      <AlertDialog open={!!editingPlayer} onOpenChange={(open) => !open && handleCancelEditPlayer()}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Rename Player</AlertDialogTitle>
+            <AlertDialogDescription>
+                Enter a new name for {editingPlayer?.name}.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4 space-y-4">
+                <Input
+                    placeholder="New Player Name"
+                    value={editingPlayerName}
+                    onChange={(e) => setEditingPlayerName(e.target.value)}
+                    onKeyDown={handleUpdatePlayerOnEnter}
+                    aria-label="New player name"
+                    autoFocus
+                />
+            </div>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={handleCancelEditPlayer}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleUpdatePlayerName}>Save</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
-}
 
     
