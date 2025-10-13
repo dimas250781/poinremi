@@ -133,25 +133,31 @@ export default function ScoreboardPage() {
     handleCancelEditPlayer();
   }
 
-  const handleResetPlayerScore = (playerIdToReset: number) => {
-    const playerIndex = players.findIndex(p => p.id === playerIdToReset);
-    if(playerIndex !== -1) {
-      const newRounds = rounds.map(round => {
-        const newRound = [...round];
-        newRound[playerIndex] = 0; 
-        return newRound;
-      });
-      setRounds(newRounds);
-      
-      const newCurrentScores = [...currentScores];
-      newCurrentScores[playerIndex] = "";
-      setCurrentScores(newCurrentScores);
+  const handleDeletePlayer = (playerIdToDelete: number) => {
+    const playerIndex = players.findIndex(p => p.id === playerIdToDelete);
+    if (playerIndex === -1) return;
 
-      toast({
-        title: "Score Reset",
-        description: `The score for ${players[playerIndex].name} has been reset to 0.`,
-      });
-    }
+    const playerName = players[playerIndex].name;
+
+    // Remove player
+    setPlayers(players.filter(p => p.id !== playerIdToDelete));
+
+    // Remove their scores from all rounds
+    setRounds(rounds.map(round => {
+      const newRound = [...round];
+      newRound.splice(playerIndex, 1);
+      return newRound;
+    }));
+
+    // Remove their score from current input
+    const newCurrentScores = [...currentScores];
+    newCurrentScores.splice(playerIndex, 1);
+    setCurrentScores(newCurrentScores);
+    
+    toast({
+      title: "Player Deleted",
+      description: `${playerName} has been removed from the game.`,
+    });
   };
 
   const handleAddPlayerOnEnter = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -429,9 +435,25 @@ export default function ScoreboardPage() {
                           <ThumbsDown className="w-4 h-4 text-red-500 fill-red-500" />
                       )}
                   </div>
-                  <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs" onClick={() => handleResetPlayerScore(player.id)}>
-                    <Trash2 className="mr-1 h-3 w-3" /> Cut
-                  </Button>
+                   <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="mt-1 h-7 text-xs">
+                          <Trash2 className="mr-1 h-3 w-3" /> Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Player?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete {player.name}? All their scores will be removed. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeletePlayer(player.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                 </div>
               ))}
             </div>
@@ -455,7 +477,7 @@ export default function ScoreboardPage() {
                   <div key={id} className="text-center">
                       <Input
                         type="text"
-                        inputMode="numeric"
+                        inputMode="text"
                         placeholder="0"
                         value={currentScores[originalIndex]}
                         onChange={(e) => handleScoreChange(originalIndex, e.target.value)}
