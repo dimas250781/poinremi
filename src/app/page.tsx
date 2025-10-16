@@ -419,14 +419,14 @@ export default function ScoreboardPage() {
       <div className="w-full max-w-sm h-[90vh] max-h-[800px] flex flex-col bg-background rounded-2xl shadow-2xl overflow-hidden">
         
         <div className="flex-shrink-0 p-4">
-          <header className="w-full mb-6 text-center">
+          <header className="w-full mb-4 text-center">
             <div className="flex items-center justify-center gap-3">
-              <Trophy className="w-10 h-10 text-accent" />
-              <h1 className="text-5xl font-bold text-accent">
+              <Trophy className="w-8 h-8 text-accent" />
+              <h1 className="text-4xl font-bold text-accent">
                 SKOR REMI
               </h1>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Dibuat oleh: M01 Software Development
             </p>
           </header>
@@ -434,7 +434,7 @@ export default function ScoreboardPage() {
           <div className="flex justify-center gap-2 flex-wrap">
             <AlertDialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
               <AlertDialogTrigger asChild>
-                  <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Button size="sm" variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground">
                       <Plus className="mr-2" /> Add Player
                   </Button>
               </AlertDialogTrigger>
@@ -483,13 +483,13 @@ export default function ScoreboardPage() {
               </AlertDialogContent>
             </AlertDialog>
             
-            <Button variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleNewRound} disabled={players.length === 0}>
+            <Button size="sm" variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleNewRound} disabled={players.length === 0}>
               <Plus className="mr-2" /> New Round
             </Button>
             
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline">
+                <Button size="sm" variant="outline">
                   <History className="mr-2"/> Winner History
                 </Button>
               </SheetTrigger>
@@ -637,7 +637,7 @@ export default function ScoreboardPage() {
         {players.length > 0 && (
           <div className="flex-shrink-0 mt-auto border-t border-border">
               <div className="p-4">
-                <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
+                <div className={`grid gap-4 mt-2`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
                     {sortedPlayers.map(({ totalScore, id, color }) => (
                         <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold", color.bg, color.text)}>
                             {totalScore}
@@ -779,7 +779,3 @@ export default function ScoreboardPage() {
     </main>
   );
 }
-
-    
-
-    
