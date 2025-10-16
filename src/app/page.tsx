@@ -102,6 +102,8 @@ export default function ScoreboardPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+
 
   const usedPlayerColors = useMemo(() => new Set(players.map(p => p.color.id)), [players]);
 
@@ -305,8 +307,11 @@ export default function ScoreboardPage() {
   };
 
    const openCamera = async () => {
+    if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -348,16 +353,23 @@ export default function ScoreboardPage() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
-      context?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+      if(context) {
+        if (facingMode === 'user') {
+          context.translate(video.videoWidth, 0);
+          context.scale(-1, 1);
+        }
+        context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        if (facingMode === 'user') {
+          context.setTransform(1, 0, 0, 1, 0, 0);
+        }
+      }
       const dataUrl = canvas.toDataURL('image/png');
       setCapturedImage(dataUrl);
-      closeCamera();
     }
   };
 
   const retakePicture = () => {
     setCapturedImage(null);
-    openCamera();
   };
 
   const usePicture = () => {
@@ -367,15 +379,18 @@ export default function ScoreboardPage() {
     }
   };
 
+  const switchCamera = () => {
+    setFacingMode(prevMode => prevMode === 'user' ? 'environment' : 'user');
+  }
+
   useEffect(() => {
     if (isCameraSheetOpen) {
       openCamera();
     } else {
       closeCamera();
     }
-    return () => closeCamera();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCameraSheetOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCameraSheetOpen, facingMode]);
 
 
   useEffect(() => {
@@ -730,9 +745,9 @@ export default function ScoreboardPage() {
           </SheetHeader>
           <div className="flex-grow flex flex-col items-center justify-center relative bg-black">
             {capturedImage ? (
-              <img src={capturedImage} alt="Captured" className="max-h-full max-w-full object-contain" />
+                <img src={capturedImage} alt="Captured" className="max-h-full max-w-full object-contain" />
             ) : (
-              <video ref={videoRef} className="h-full w-full object-contain" autoPlay playsInline muted />
+                <video ref={videoRef} className={cn("h-full w-full object-contain", facingMode === 'user' && 'transform -scale-x-100')} autoPlay playsInline muted />
             )}
             <canvas ref={canvasRef} className="hidden" />
           </div>
@@ -747,10 +762,14 @@ export default function ScoreboardPage() {
                 </Button>
               </div>
             ) : (
-              <div className="flex justify-center w-full">
+              <div className="flex justify-center items-center w-full relative">
                 <Button size="lg" className="rounded-full w-20 h-20" onClick={takePicture}>
                   <Circle className="w-16 h-16 fill-white" />
                   <span className="sr-only">Take Picture</span>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={switchCamera} className="absolute right-4 rounded-full w-12 h-12">
+                    <RefreshCw className="w-6 h-6"/>
+                    <span className="sr-only">Switch Camera</span>
                 </Button>
               </div>
             )}
