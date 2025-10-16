@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, type KeyboardEvent, useEffect, type ChangeEvent } from "react";
+import { useState, useMemo, type KeyboardEvent, useEffect, type ChangeEvent, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -41,6 +41,9 @@ import {
   RotateCcw,
   Trophy,
   Camera,
+  Video,
+  Circle,
+  RefreshCw,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -93,6 +96,13 @@ export default function ScoreboardPage() {
   
   const { toast } = useToast();
 
+  const [playerForCamera, setPlayerForCamera] = useState<Player | null>(null);
+  const [isCameraSheetOpen, setIsCameraSheetOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
   const usedPlayerColors = useMemo(() => new Set(players.map(p => p.color.id)), [players]);
 
   const handleAddPlayer = () => {
@@ -141,7 +151,6 @@ export default function ScoreboardPage() {
     const playerIndex = players.findIndex(p => p.id === playerIdToCut);
     if (playerIndex === -1) return;
 
-    // Set all past scores for this player to 0
     const newRounds = rounds.map(round => {
         const updatedRound = [...round];
         if (updatedRound[playerIndex] !== undefined) {
@@ -151,7 +160,6 @@ export default function ScoreboardPage() {
     });
     setRounds(newRounds);
 
-    // Set current input score for this player to ""
     const newCurrentScores = [...currentScores];
     newCurrentScores[playerIndex] = "";
     setCurrentScores(newCurrentScores);
@@ -168,17 +176,14 @@ export default function ScoreboardPage() {
 
     const playerName = players[playerIndex].name;
 
-    // Remove player
     setPlayers(players.filter(p => p.id !== playerIdToDelete));
 
-    // Remove their scores from all rounds
     setRounds(rounds.map(round => {
       const newRound = [...round];
       newRound.splice(playerIndex, 1);
       return newRound;
     }));
 
-    // Remove their score from current input
     const newCurrentScores = [...currentScores];
     newCurrentScores.splice(playerIndex, 1);
     setCurrentScores(newCurrentScores);
@@ -290,7 +295,7 @@ export default function ScoreboardPage() {
   const handleScoreChange = (index: number, value: string) => {
     const newScores = [...currentScores];
     if (/^-?\d*$/.test(value)) {
-      if (currentScores[index] === 0 && value !== '0' && value !== '') {
+      if ((currentScores[index] === 0 || currentScores[index] === '0') && value !== '0' && value !== '' && value !== '-') {
         newScores[index] = value.replace(/^0+/, '');
       } else {
         newScores[index] = value;
@@ -299,17 +304,79 @@ export default function ScoreboardPage() {
     }
   };
 
-  const handlePhotoUpload = (e: ChangeEvent<HTMLInputElement>, playerId: number) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const photoUrl = event.target?.result as string;
-        setPlayers(players.map(p => p.id === playerId ? { ...p, photoUrl } : p));
-      };
-      reader.readAsDataURL(file);
+   const openCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error("Error accessing camera: ", err);
+      toast({
+        variant: "destructive",
+        title: "Camera Access Denied",
+        description: "Please enable camera permissions in your browser settings.",
+      });
+      setIsCameraSheetOpen(false);
     }
   };
+
+  const closeCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setCapturedImage(null);
+  };
+  
+  const handleOpenCameraSheet = (player: Player) => {
+    setPlayerForCamera(player);
+    setIsCameraSheetOpen(true);
+  }
+  
+  const handleCloseCameraSheet = () => {
+    closeCamera();
+    setIsCameraSheetOpen(false);
+    setPlayerForCamera(null);
+  }
+
+  const takePicture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+      const dataUrl = canvas.toDataURL('image/png');
+      setCapturedImage(dataUrl);
+      closeCamera();
+    }
+  };
+
+  const retakePicture = () => {
+    setCapturedImage(null);
+    openCamera();
+  };
+
+  const usePicture = () => {
+    if (capturedImage && playerForCamera) {
+      setPlayers(players.map(p => p.id === playerForCamera.id ? { ...p, photoUrl: capturedImage } : p));
+      handleCloseCameraSheet();
+    }
+  };
+
+  useEffect(() => {
+    if (isCameraSheetOpen) {
+      openCamera();
+    } else {
+      closeCamera();
+    }
+    return () => closeCamera();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCameraSheetOpen]);
+
 
   useEffect(() => {
     const firstAvailableColor = playerColors.find(c => !usedPlayerColors.has(c.id) && c.id !== 'default');
@@ -319,17 +386,10 @@ export default function ScoreboardPage() {
   }, [isAddPlayerDialogOpen, usedPlayerColors]);
 
   useEffect(() => {
-    if (players.length === 0) return;
+    if (players.length < 2) return;
 
-    const scoresForWinnerCheck = players.map((_, playerIndex) => {
-        return rounds.reduce((total, round) => total + (Number(round[playerIndex]) || 0), 0) + Number(currentScores[playerIndex] || 0);
-      });
-
-    const winnerCheck = players
-        .map((p, i) => ({ name: p.name, score: scoresForWinnerCheck[i] }))
-        .sort((a, b) => b.score - a.score)[0];
-
-    if (winnerCheck && winnerCheck.score >= 1000) {
+    const winnerCheck = sortedPlayers[0];
+    if (winnerCheck && winnerCheck.totalScore >= 1000) {
       if (!winner) {
         setWinner(winnerCheck.name);
         setIsWinnerDialogOpen(true);
@@ -337,7 +397,7 @@ export default function ScoreboardPage() {
     } else {
       setWinner(null);
     }
-  }, [rounds, currentScores, players, winner]);
+  }, [sortedPlayers, players, winner]);
 
   return (
     <main className="flex flex-col items-center justify-center p-4 bg-gray-800 min-h-screen text-foreground">
@@ -490,10 +550,9 @@ export default function ScoreboardPage() {
                       <AvatarImage src={player.photoUrl} alt={player.name} />
                       <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <label htmlFor={`photo-upload-${player.id}`} className="absolute -bottom-1 -right-1 bg-accent text-accent-foreground rounded-full p-1 cursor-pointer hover:bg-accent/90">
+                    <button onClick={() => handleOpenCameraSheet(player)} className="absolute -bottom-1 -right-1 bg-accent text-accent-foreground rounded-full p-1 cursor-pointer hover:bg-accent/90">
                       <Camera className="w-3 h-3" />
-                    </label>
-                    <input id={`photo-upload-${player.id}`} type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, player.id)} />
+                    </button>
                   </div>
 
                   <Button variant="link" className="p-0 h-auto font-semibold text-lg text-foreground break-words" onClick={() => handleStartEditPlayer(player)}>
@@ -664,6 +723,40 @@ export default function ScoreboardPage() {
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+       <Sheet open={isCameraSheetOpen} onOpenChange={handleCloseCameraSheet}>
+        <SheetContent side="bottom" className="h-full flex flex-col">
+          <SheetHeader>
+            <SheetTitle>Take a Photo for {playerForCamera?.name}</SheetTitle>
+          </SheetHeader>
+          <div className="flex-grow flex flex-col items-center justify-center relative bg-black">
+            {capturedImage ? (
+              <img src={capturedImage} alt="Captured" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <video ref={videoRef} className="h-full w-full object-contain" autoPlay playsInline muted />
+            )}
+            <canvas ref={canvasRef} className="hidden" />
+          </div>
+          <SheetFooter className="p-4 border-t">
+            {capturedImage ? (
+              <div className="flex justify-center gap-4 w-full">
+                <Button variant="outline" onClick={retakePicture}>
+                  <RefreshCw className="mr-2" /> Retake
+                </Button>
+                <Button onClick={usePicture} className="bg-accent hover:bg-accent/90">
+                  <ThumbsUp className="mr-2" /> Use Photo
+                </Button>
+              </div>
+            ) : (
+              <div className="flex justify-center w-full">
+                <Button size="lg" className="rounded-full w-20 h-20" onClick={takePicture}>
+                  <Circle className="w-16 h-16 fill-white" />
+                  <span className="sr-only">Take Picture</span>
+                </Button>
+              </div>
+            )}
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </main>
   );
 }
