@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, type KeyboardEvent, useEffect } from "react";
+import { useState, useMemo, type KeyboardEvent, useEffect, type ChangeEvent } from "react";
 import {
   Card,
   CardContent,
@@ -40,9 +40,11 @@ import {
   ThumbsDown,
   RotateCcw,
   Trophy,
+  Camera,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const playerColors = [
   { id: 'default', name: 'Default', bg: 'bg-accent/20', border: 'border-border', headerBg: 'bg-card', text: 'text-foreground' },
@@ -60,6 +62,7 @@ type Player = {
   id: number;
   name: string;
   color: PlayerColor;
+  photoUrl?: string;
 };
 
 type PlayerWithScore = Player & {
@@ -296,6 +299,18 @@ export default function ScoreboardPage() {
     }
   };
 
+  const handlePhotoUpload = (e: ChangeEvent<HTMLInputElement>, playerId: number) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const photoUrl = event.target?.result as string;
+        setPlayers(players.map(p => p.id === playerId ? { ...p, photoUrl } : p));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   useEffect(() => {
     const firstAvailableColor = playerColors.find(c => !usedPlayerColors.has(c.id) && c.id !== 'default');
     if (firstAvailableColor) {
@@ -461,7 +476,7 @@ export default function ScoreboardPage() {
           <div className="flex-shrink-0 p-4 border-t border-b border-border">
             <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
               {sortedPlayers.map((player, idx) => (
-                <div key={player.id} className="text-center flex flex-col items-center justify-start h-24">
+                <div key={player.id} className="text-center flex flex-col items-center justify-start h-auto space-y-2">
                   <div className="h-5">
                       {sortedPlayers.length > 1 && idx === 0 && (
                           <ThumbsUp className="w-5 h-5 text-yellow-400 fill-yellow-400 shrink-0" />
@@ -470,6 +485,17 @@ export default function ScoreboardPage() {
                           <ThumbsDown className="w-5 h-5 text-red-500 fill-red-500 shrink-0" />
                       )}
                   </div>
+                  <div className="relative">
+                    <Avatar className="w-16 h-16">
+                      <AvatarImage src={player.photoUrl} alt={player.name} />
+                      <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <label htmlFor={`photo-upload-${player.id}`} className="absolute -bottom-1 -right-1 bg-accent text-accent-foreground rounded-full p-1 cursor-pointer hover:bg-accent/90">
+                      <Camera className="w-3 h-3" />
+                    </label>
+                    <input id={`photo-upload-${player.id}`} type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, player.id)} />
+                  </div>
+
                   <Button variant="link" className="p-0 h-auto font-semibold text-lg text-foreground break-words" onClick={() => handleStartEditPlayer(player)}>
                     {player.name}
                   </Button>
