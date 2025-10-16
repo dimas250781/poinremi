@@ -105,6 +105,43 @@ export default function ScoreboardPage() {
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
 
+  useEffect(() => {
+    try {
+      const savedPlayers = localStorage.getItem("remi_players");
+      const savedRounds = localStorage.getItem("remi_rounds");
+      const savedHistory = localStorage.getItem("remi_gameHistory");
+
+      if (savedPlayers) {
+        const parsedPlayers = JSON.parse(savedPlayers);
+        setPlayers(parsedPlayers);
+        setCurrentScores(Array(parsedPlayers.length).fill(""));
+      }
+      if (savedRounds) {
+        setRounds(JSON.parse(savedRounds));
+      }
+      if (savedHistory) {
+        // Need to parse dates correctly
+        const parsedHistory = JSON.parse(savedHistory).map((game: GameResult) => ({
+          ...game,
+          timestamp: new Date(game.timestamp),
+        }));
+        setGameHistory(parsedHistory);
+      }
+    } catch (error) {
+      console.error("Failed to load state from localStorage", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("remi_players", JSON.stringify(players));
+      localStorage.setItem("remi_rounds", JSON.stringify(rounds));
+      localStorage.setItem("remi_gameHistory", JSON.stringify(gameHistory));
+    } catch (error) {
+       console.error("Failed to save state to localStorage", error);
+    }
+  }, [players, rounds, gameHistory]);
+
   const usedPlayerColors = useMemo(() => new Set(players.map(p => p.color.id)), [players]);
 
   const handleAddPlayer = () => {
@@ -284,10 +321,14 @@ export default function ScoreboardPage() {
     setNewPlayerName("");
     setWinner(null);
     setIsWinnerDialogOpen(false);
+    
+    localStorage.removeItem("remi_players");
+    localStorage.removeItem("remi_rounds");
   }
 
   const handleClearHistory = () => {
     setGameHistory([]);
+    localStorage.removeItem("remi_gameHistory");
     toast({
       title: "Success",
       description: "Winner history has been cleared."
@@ -421,8 +462,8 @@ export default function ScoreboardPage() {
         <div className="flex-shrink-0 p-4">
           <header className="w-full mb-4 text-center">
             <div className="flex items-center justify-center gap-3">
-              <Trophy className="w-8 h-8 text-accent" />
-              <h1 className="text-4xl font-bold text-accent">
+              <Trophy className="w-7 h-7 text-accent" />
+              <h1 className="text-3xl font-bold text-accent">
                 SKOR REMI
               </h1>
             </div>
@@ -434,7 +475,7 @@ export default function ScoreboardPage() {
           <div className="flex justify-center gap-2 flex-wrap">
             <AlertDialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
               <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Button size="sm" variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground h-9">
                       <Plus className="mr-2" /> Add Player
                   </Button>
               </AlertDialogTrigger>
@@ -483,13 +524,13 @@ export default function ScoreboardPage() {
               </AlertDialogContent>
             </AlertDialog>
             
-            <Button size="sm" variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleNewRound} disabled={players.length === 0}>
+            <Button size="sm" variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground h-9" onClick={handleNewRound} disabled={players.length === 0}>
               <Plus className="mr-2" /> New Round
             </Button>
             
             <Sheet>
               <SheetTrigger asChild>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" className="h-9">
                   <History className="mr-2"/> Winner History
                 </Button>
               </SheetTrigger>
@@ -504,7 +545,7 @@ export default function ScoreboardPage() {
                   <div className="space-y-4">
                     {gameHistory.length > 0 ? gameHistory.map((game, index) => (
                       <div key={game.id} className="p-4 border rounded-lg">
-                        <h3 className="font-bold mb-2">Game #{gameHistory.length - index} - {game.timestamp.toLocaleString()}</h3>
+                        <h3 className="font-bold mb-2">Game #{gameHistory.length - index} - {new Date(game.timestamp).toLocaleString()}</h3>
                         <ol className="list-decimal list-inside space-y-1">
                           {game.players.map(p => (
                             <li key={p.id}>
@@ -611,7 +652,7 @@ export default function ScoreboardPage() {
                 </div>
               ))}
               {players.length > 0 && (
-                <div className={`grid gap-4 mt-2`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
+                <div className={`grid gap-4 mt-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
                     {sortedPlayers.map(({ originalIndex, id, color }) => (
                     <div key={id} className="text-center">
                         <Input
@@ -637,7 +678,7 @@ export default function ScoreboardPage() {
         {players.length > 0 && (
           <div className="flex-shrink-0 mt-auto border-t border-border">
               <div className="p-4">
-                <div className={`grid gap-4 mt-2`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
+                <div className={`grid gap-4 mt-4`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
                     {sortedPlayers.map(({ totalScore, id, color }) => (
                         <div key={id} className={cn("rounded-md p-2 text-center text-2xl font-bold", color.bg, color.text)}>
                             {totalScore}
