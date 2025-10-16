@@ -562,7 +562,7 @@ export default function ScoreboardPage() {
                   </div>
                   <div className="relative">
                     <Avatar className="w-16 h-16">
-                      <AvatarImage src={player.photoUrl} alt={player.name} />
+                      <AvatarImage src={player.photoUrl} alt={player.name} className="object-cover" />
                       <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <button onClick={() => handleOpenCameraSheet(player)} className="absolute -bottom-1 -right-1 bg-accent text-accent-foreground rounded-full p-1 cursor-pointer hover:bg-accent/90">
@@ -745,9 +745,9 @@ export default function ScoreboardPage() {
           </SheetHeader>
           <div className="flex-grow flex flex-col items-center justify-center relative bg-black">
             {capturedImage ? (
-                <img src={capturedImage} alt="Captured" className="max-h-full max-w-full object-contain" />
+                <img src={capturedImage} alt="Captured" className="max-h-full max-w-full object-cover" />
             ) : (
-                <video ref={videoRef} className={cn("h-full w-full object-contain", facingMode === 'user' && 'transform -scale-x-100')} autoPlay playsInline muted />
+                <video ref={videoRef} className={cn("h-full w-full object-cover", facingMode === 'user' && 'transform -scale-x-100')} autoPlay playsInline muted />
             )}
             <canvas ref={canvasRef} className="hidden" />
           </div>
@@ -779,5 +779,7 @@ export default function ScoreboardPage() {
     </main>
   );
 }
+
+    
 
     
